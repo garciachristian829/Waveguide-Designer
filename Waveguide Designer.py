@@ -8,9 +8,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
-from main import Ui_Dialog
 
 # finally added to github
+import mainGUI
 
 mpl.use("Qt5Agg")
 mpl.rcParams["toolbar"] = "None"  # Get rid of toolbar
@@ -161,8 +161,8 @@ if __name__ == "__main__":
 
     # Run with QT5 UI
     import sys
-    from main import (
-        Ui_Dialog,
+    from mainGUI import (
+        Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
 
@@ -174,7 +174,7 @@ if __name__ == "__main__":
             super(MplCanvas, self).__init__(fig)
 
 
-    class Ui_Dialog(QtWidgets.QMainWindow, Ui_Dialog):
+    class Ui_MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         def __init__(self):
             super().__init__()
             self.once = True
@@ -182,12 +182,12 @@ if __name__ == "__main__":
         def setupUi(self, Dialog):
             super().setupUi(Dialog)
 
-            self.pushButton_GenerateWaveguide.clicked.connect(self.on_click)
-            self.pushButton_SaveTxt.clicked.connect(self.on_click2)
-            # Dialog.setWindowIcon(QtGui.QIcon('Waveguide.png'))
+            self.pushButton_generate_waveguide.clicked.connect(self.on_click)
+            self.pushButton_save_button.clicked.connect(self.on_click2)
 
         @pyqtSlot()
         def on_click(self):
+            print("clicked")
             # GLUE CODE #2: Get Parameters from LineEdits
             def value(w):
                 try:
@@ -199,11 +199,10 @@ if __name__ == "__main__":
 
             # UI Layout:
             # (1) Throat Diameter (mm)          (4) Width (mm)
-            # (2) Angle Factor        (5) Height (mm)
+            # N/A       (5) Height (mm)
             # (3) Coverage Angle (deg)OUTPUT        (6) Depth Factor
 
             Throat_Diameter = value(self.lineEdit_throat_diameter)  # (1)
-            # Coverage_Angle_H = value(self.lineEdit_coverage_angle_h)  # (2)
             Angle_Factor = value(self.lineEdit_angle_factor)  # (3)
             Width = value(self.lineEdit_width)  # (4)
             Height = value(self.lineEdit_height)  # (5)
@@ -254,9 +253,9 @@ if __name__ == "__main__":
     #
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName("Waveguide Designer")
-    Dialog = QtWidgets.QDialog()
+    Dialog = QtWidgets.QMainWindow()
     # Extent class Ui_Dialog with GLUE CODE 1-3
-    ui = Ui_Dialog()
+    ui = Ui_MainWindow()
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
