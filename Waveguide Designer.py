@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 from main import Ui_Dialog
 
+# finally added to github
+
 mpl.use("Qt5Agg")
 mpl.rcParams["toolbar"] = "None"  # Get rid of toolbar
 
