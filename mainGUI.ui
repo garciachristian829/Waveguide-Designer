@@ -1025,15 +1025,33 @@
        <set>Qt::AlignCenter</set>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="label_9">
          <property name="text">
           <string>Coverage Angle</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QLineEdit" name="lineEdit_coverage_angle"/>
+       <item row="2" column="0">
+        <widget class="QLineEdit" name="lineEdit_coverage_angle">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLineEdit" name="lineEdit_cutoff_freq">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>Cutoff Frequency</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1081,11 +1099,47 @@ Waveguide</string>
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionSave_Parameters"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionSave_Parameters">
+   <property name="text">
+    <string>Save Parameters</string>
+   </property>
+  </action>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_throat_diameter</tabstop>
+  <tabstop>lineEdit_width</tabstop>
+  <tabstop>lineEdit_height</tabstop>
+  <tabstop>lineEdit_angle_factor</tabstop>
+  <tabstop>lineEdit_depth_factor</tabstop>
+  <tabstop>checkBox_phaseplug</tabstop>
+  <tabstop>lineEdit_plug_diameter</tabstop>
+  <tabstop>lineEdit_dome_diameter</tabstop>
+  <tabstop>lineEdit_plugoffset</tabstop>
+  <tabstop>pushButton_generate_waveguide</tabstop>
+  <tabstop>pushButton_save_button</tabstop>
+ </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>checkBox_phaseplug</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>checkBox_phaseplug</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>144</x>
+     <y>717</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>144</x>
+     <y>717</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

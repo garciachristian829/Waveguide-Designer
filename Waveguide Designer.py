@@ -166,6 +166,7 @@ if __name__ == "__main__":
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
 
+
     # GLUE CODE: deal with matplotlib
     class MplCanvas(FigureCanvasQTAgg):
         def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -176,18 +177,19 @@ if __name__ == "__main__":
 
     class Ui_MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         def __init__(self):
-            super().__init__()
-            self.once = True
+            super(Ui_MainWindow, self).__init__()
 
         def setupUi(self, Dialog):
             super().setupUi(Dialog)
 
             self.pushButton_generate_waveguide.clicked.connect(self.on_click)
             self.pushButton_save_button.clicked.connect(self.on_click2)
+            self.checkBox_phaseplug.isChecked(self.check_state())
 
         @pyqtSlot()
         def on_click(self):
             print("clicked")
+
             # GLUE CODE #2: Get Parameters from LineEdits
             def value(w):
                 try:
@@ -221,6 +223,7 @@ if __name__ == "__main__":
             self.canvas1 = MplCanvas(self, width=5, height=4, dpi=100)
             self.canvas2 = MplCanvas(self, width=5, height=4, dpi=100)
             ax = [self.canvas1.axes, self.canvas2.axes]
+
             self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.coverage_angle = main_calc(
                 ax,
                 waveguide_throat,
@@ -229,8 +232,10 @@ if __name__ == "__main__":
                 depth_fact,
                 angle_fact
             )
-            self.gridLayout_3.addWidget(self.canvas1, 1, 0, 1, 1)
-            self.gridLayout_3.addWidget(self.canvas2, 2, 0, 1, 1)
+
+            self.gridLayout_4.addWidget(self.canvas1, 0, 1, 1, 4)
+            self.gridLayout_4.addWidget(self.canvas2, 1, 1, 1, 4)
+
             self.canvas1.draw()
             self.canvas2.draw()
 
@@ -247,6 +252,13 @@ if __name__ == "__main__":
             save_text = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
 
             save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text)
+
+        def check_state(self):
+            if
+
+
+
+
 
 
     # MAIN APP
