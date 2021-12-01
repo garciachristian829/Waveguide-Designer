@@ -16,6 +16,7 @@ mpl.use("Qt5Agg")
 mpl.rcParams["toolbar"] = "None"  # Get rid of toolbar
 
 
+
 def xy_waveguide_contour(throat, x_waveguide, ellipse_x):
     x_initial = (throat + (x_waveguide * (ellipse_x - throat))) / 2
 
@@ -184,7 +185,8 @@ if __name__ == "__main__":
 
             self.pushButton_generate_waveguide.clicked.connect(self.on_click)
             self.pushButton_save_button.clicked.connect(self.on_click2)
-            self.checkBox_phaseplug.isChecked(self.check_state())
+            self.checkBox_phaseplug.isChecked()
+
 
         @pyqtSlot()
         def on_click(self):
@@ -254,7 +256,11 @@ if __name__ == "__main__":
             save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text)
 
         def check_state(self):
-            if
+            if self.checkBox_phaseplug == True:
+                print("Checked")
+                self.groupBox_phaseplug.
+            else:
+                print("not checked")
 
 
 
