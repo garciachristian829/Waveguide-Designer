@@ -16,7 +16,6 @@ mpl.use("Qt5Agg")
 mpl.rcParams["toolbar"] = "None"  # Get rid of toolbar
 
 
-
 def xy_waveguide_contour(throat, x_waveguide, ellipse_x):
     x_initial = (throat + (x_waveguide * (ellipse_x - throat))) / 2
 
@@ -158,6 +157,18 @@ def save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text)
     return ()
 
 
+def cutoff_frequency(coverage_angle, throat_diameter):
+    coverage_angle = coverage_angle / 2
+
+    throat_radius = (throat_diameter / 2)/1000
+
+    print(coverage_angle, throat_radius)
+
+    cutoff_freq = (44 * (math.radians(math.sin(coverage_angle)) / throat_radius)) * (-1)
+
+    return cutoff_freq
+
+
 if __name__ == "__main__":
 
     # Run with QT5 UI
@@ -166,7 +177,6 @@ if __name__ == "__main__":
         Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
-
 
     # GLUE CODE: deal with matplotlib
     class MplCanvas(FigureCanvasQTAgg):
@@ -183,42 +193,35 @@ if __name__ == "__main__":
         def setupUi(self, Dialog):
             super().setupUi(Dialog)
 
-            self.pushButton_generate_waveguide.clicked.connect(self.on_click)
+            self.pushButton_generate_waveguide.clicked.connect(self.generate_waveguide)
             self.pushButton_save_button.clicked.connect(self.on_click2)
-            self.checkBox_phaseplug.isChecked()
-
+            self.checkBox_phaseplug.stateChanged.connect(self.check_state, self.checkBox_phaseplug.isChecked())
 
         @pyqtSlot()
-        def on_click(self):
-            print("clicked")
-
+        def generate_waveguide(self):
             # GLUE CODE #2: Get Parameters from LineEdits
             def value(w):
-                try:
-                    # print(f"{w}.text() -> {w.text()}")
-                    v = float(w.text())
-                except:
-                    v = 0
-                return v
+                if w.text() == "":
+                    msg = QtWidgets.QMessageBox()  # EXCEPTION MESSAGE ONE
+                    msg.setIcon(2)
+                    msg.setText("You cannot leave the inputs blank")
+                    msg.setWindowTitle("Error")
+                    msg.exec_()
+                    return sys.exit()
+                else:
+                    w = float(w.text())
+                    return w
 
             # UI Layout:
             # (1) Throat Diameter (mm)          (4) Width (mm)
             # N/A       (5) Height (mm)
             # (3) Coverage Angle (deg)OUTPUT        (6) Depth Factor
 
-            Throat_Diameter = value(self.lineEdit_throat_diameter)  # (1)
-            Angle_Factor = value(self.lineEdit_angle_factor)  # (3)
-            Width = value(self.lineEdit_width)  # (4)
-            Height = value(self.lineEdit_height)  # (5)
-            Depth_Factor = value(self.lineEdit_depth_factor)  # (6)
-
-            # Translate to actual parameters in CALC
-            # ### Check this, some values i could not identify ###
-            waveguide_throat = Throat_Diameter
-            ellipse_x = Width
-            ellipse_y = Height
-            depth_fact = Depth_Factor
-            angle_fact = Angle_Factor
+            throat_diameter = value(self.lineEdit_throat_diameter)  # (1)
+            angle_factor = value(self.lineEdit_angle_factor)  # (3)
+            width = value(self.lineEdit_width)  # (4)
+            height = value(self.lineEdit_height)  # (5)
+            depth_factor = value(self.lineEdit_depth_factor)  # (6)
 
             # GLUE CODE #3: deal with matplotlib
             # overlay widget and widget_2 with two canvas matplotlib can draw into
@@ -228,12 +231,13 @@ if __name__ == "__main__":
 
             self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.coverage_angle = main_calc(
                 ax,
-                waveguide_throat,
-                ellipse_x,
-                ellipse_y,
-                depth_fact,
-                angle_fact
+                throat_diameter,
+                width,
+                height,
+                depth_factor,
+                angle_factor
             )
+            cutoff_freq = cutoff_frequency(self.coverage_angle, throat_diameter)
 
             self.gridLayout_4.addWidget(self.canvas1, 0, 1, 1, 4)
             self.gridLayout_4.addWidget(self.canvas2, 1, 1, 1, 4)
@@ -241,9 +245,11 @@ if __name__ == "__main__":
             self.canvas1.draw()
             self.canvas2.draw()
 
-            self.coverage_angle = str(int(self.coverage_angle))
+            coverage_angle = str(int(self.coverage_angle))
+            cutoff_freq = str(int(cutoff_freq))
 
-            self.lineEdit_coverage_angle.setText(self.coverage_angle)
+            self.lineEdit_coverage_angle.setText(coverage_angle)
+            self.lineEdit_cutoff_freq.setText(cutoff_freq)
 
         def on_click2(self):
             circle_array = self.circle_array
@@ -255,22 +261,17 @@ if __name__ == "__main__":
 
             save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text)
 
-        def check_state(self):
-            if self.checkBox_phaseplug == True:
-                print("Checked")
-                self.groupBox_phaseplug.
+        def check_state(self, state):
+
+            if state == 0:
+                self.groupBox_phaseplug.setEnabled(True)
             else:
-                print("not checked")
-
-
-
-
+                self.groupBox_phaseplug.setEnabled(False)
 
 
     # MAIN APP
     #
     app = QtWidgets.QApplication(sys.argv)
-    app.setApplicationName("Waveguide Designer")
     Dialog = QtWidgets.QMainWindow()
     # Extent class Ui_Dialog with GLUE CODE 1-3
     ui = Ui_MainWindow()
