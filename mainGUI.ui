@@ -967,10 +967,18 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEdit_throat_diameter"/>
+        <widget class="QLineEdit" name="lineEdit_throat_diameter">
+         <property name="toolTip">
+          <string>Enter throat diameter</string>
+         </property>
+        </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QLineEdit" name="lineEdit_angle_factor"/>
+        <widget class="QLineEdit" name="lineEdit_angle_factor">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter angle factor &lt;/p&gt;&lt;p&gt;Play with this value to get your desired coverage angle&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_4">
@@ -980,10 +988,18 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QLineEdit" name="lineEdit_height"/>
+        <widget class="QLineEdit" name="lineEdit_height">
+         <property name="toolTip">
+          <string>Enter height of waveguide, if circular enter the same value as Width</string>
+         </property>
+        </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEdit_width"/>
+        <widget class="QLineEdit" name="lineEdit_width">
+         <property name="toolTip">
+          <string>Enter width of waveguide</string>
+         </property>
+        </widget>
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
@@ -1000,7 +1016,11 @@
         </widget>
        </item>
        <item row="4" column="1">
-        <widget class="QLineEdit" name="lineEdit_depth_factor"/>
+        <widget class="QLineEdit" name="lineEdit_depth_factor">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter depth factor&lt;/p&gt;&lt;p&gt;Play with this value to get your desired depth. &lt;/p&gt;&lt;p&gt;(Target depth factor must be greater than 2)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
        </item>
        <item row="5" column="0" colspan="2" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
         <widget class="QCheckBox" name="checkBox_phaseplug">
@@ -1197,7 +1217,7 @@ Waveguide</string>
      <x>0</x>
      <y>0</y>
      <width>650</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
