@@ -160,13 +160,29 @@ def save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text)
 def cutoff_frequency(coverage_angle, throat_diameter):
     coverage_angle = coverage_angle / 2
 
-    throat_radius = (throat_diameter / 2)/1000
+    throat_radius = (throat_diameter / 2) / 1000
 
     print(coverage_angle, throat_radius)
 
     cutoff_freq = (44 * (math.radians(math.sin(coverage_angle)) / throat_radius)) * (-1)
 
     return cutoff_freq
+
+
+def phase_plug_calc(plug_dia, dome_dia, plug_offset):
+    plug_dia = plug_dia / 2
+    dome_dia = dome_dia / 2
+
+    if plug_dia == dome_dia:
+        circle_steps = np.linspace(0, 0.5 * math.pi, 100)
+        x_phase_plug_array = np.array([])
+        y_phase_plug_array = np.array([])
+        for j in range(100):
+            x_phase_plug_array = np.append(x_phase_plug_array, dome_dia * np.cos(circle_steps[j]))
+            y_phase_plug_array = np.append(y_phase_plug_array, dome_dia * np.sin(circle_steps[j]))
+
+    elif dome_dia < plug_dia > 0:
+
 
 
 if __name__ == "__main__":
@@ -177,6 +193,7 @@ if __name__ == "__main__":
         Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
+
 
     # GLUE CODE: deal with matplotlib
     class MplCanvas(FigureCanvasQTAgg):
