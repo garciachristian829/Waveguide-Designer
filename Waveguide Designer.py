@@ -65,7 +65,8 @@ def coverage_calc(x_1, y_1, x_2, y_2):
     return coverage_angle
 
 
-def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact):
+def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact, phase_plug_dia,
+              dome_dia, plug_offset):
     # Total steps = 100
     array_length = 100
 
@@ -99,6 +100,9 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
     # Calculate data for throat
     circle_x, circle_y = circle_contour(waveguide_throat)
 
+    # Calculate phase plug data
+    x_phaseplug, y_phaseplug = phase_plug_calc(phase_plug_dia, dome_dia, plug_offset)
+
     # Reshape arrays into 1 column, multiple rows
     x_array = x_array.reshape(-1, 1)
     y_array = y_array.reshape(-1, 1)
@@ -109,6 +113,8 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
     circle_x = circle_x.reshape(-1, 1)
     circle_y = circle_y.reshape(-1, 1)
     zero_array = zero_array.reshape(-1, 1)
+    x_phaseplug = x_phaseplug.reshape(-1, 1)
+    y_phaseplug = y_phaseplug.reshape(-1, 1)
 
     # save arrays to text
 
@@ -124,11 +130,18 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
     ver_array = np.concatenate(
         (zero_array, y_array, z_array), axis=1
     )
-
+    phase_plug = np.concatenate(
+        (x_phaseplug, zero_array, y_phaseplug), axis=1
+    )
+    # Begin plotting all arrays
     ax[0].plot(x_array, z_array, "tab:blue")
     ax[0].plot(x_array * -1, z_array, "tab:blue")
+    ax[0].plot(x_phaseplug, y_phaseplug, "tab:green")
+    ax[0].plot(x_phaseplug * -1, y_phaseplug, "tab:green")
     ax[1].plot(y_array, z_array, "tab:orange")
     ax[1].plot(y_array * -1, z_array, "tab:orange")
+    ax[1].plot(x_phaseplug, y_phaseplug, "tab:green")
+    ax[1].plot(x_phaseplug * -1, y_phaseplug, "tab:green")
 
     ax[0].set(title='Horizontal Curve')
     ax[1].set(title='Vertical Curve')
@@ -145,14 +158,15 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
     text_box = AnchoredText(text, loc=3)
     ax[0].add_artist(text_box)
 
-    return circle_array, ellipse_array, hor_array, ver_array, calc_coverage_angle
+    return circle_array, ellipse_array, hor_array, ver_array, calc_coverage_angle, phase_plug
 
 
-def save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text):
+def save_text_data(circle_array, ellipse_array, hor_array, ver_array, phase_plug, save_text):
     np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
     np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
     np.savetxt(save_text + "/hor.txt", hor_array, delimiter=" ")
     np.savetxt(save_text + "/ver.txt", ver_array, delimiter=" ")
+    np.savetxt(save_text + "/phase_plug.txt", phase_plug, delimiter=" ")
 
     return ()
 
@@ -162,8 +176,6 @@ def cutoff_frequency(coverage_angle, throat_diameter):
 
     throat_radius = (throat_diameter / 2) / 1000
 
-    print(coverage_angle, throat_radius)
-
     cutoff_freq = (44 * (math.radians(math.sin(coverage_angle)) / throat_radius)) * (-1)
 
     return cutoff_freq
@@ -172,17 +184,26 @@ def cutoff_frequency(coverage_angle, throat_diameter):
 def phase_plug_calc(plug_dia, dome_dia, plug_offset):
     plug_dia = plug_dia / 2
     dome_dia = dome_dia / 2
+    x_phase_plug_array = np.array([])
+    y_phase_plug_array = np.array([])
 
     if plug_dia == dome_dia:
         circle_steps = np.linspace(0, 0.5 * math.pi, 100)
-        x_phase_plug_array = np.array([])
-        y_phase_plug_array = np.array([])
+
         for j in range(100):
             x_phase_plug_array = np.append(x_phase_plug_array, dome_dia * np.cos(circle_steps[j]))
-            y_phase_plug_array = np.append(y_phase_plug_array, dome_dia * np.sin(circle_steps[j]))
+            y_phase_plug_array = np.append(y_phase_plug_array, (dome_dia * np.sin(circle_steps[j])) + plug_offset)
 
-    elif dome_dia < plug_dia > 0:
+    elif plug_dia < dome_dia > 0:
+        alpha_angle = math.asin(plug_dia / dome_dia)
+        print(alpha_angle)
+        circle_steps = np.linspace(alpha_angle, 0.5 * math.pi, 100)
 
+        for j in range(100):
+            x_phase_plug_array = np.append(x_phase_plug_array, dome_dia * np.cos(circle_steps[j]))
+            y_phase_plug_array = np.append(y_phase_plug_array, (dome_dia * np.sin(circle_steps[j])) + plug_offset)
+        print(x_phase_plug_array)
+    return x_phase_plug_array, y_phase_plug_array
 
 
 if __name__ == "__main__":
@@ -193,7 +214,6 @@ if __name__ == "__main__":
         Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
-
 
     # GLUE CODE: deal with matplotlib
     class MplCanvas(FigureCanvasQTAgg):
@@ -209,6 +229,7 @@ if __name__ == "__main__":
 
         def setupUi(self, Dialog):
             super().setupUi(Dialog)
+            self.groupBox_phaseplug.setEnabled(False)
 
             self.pushButton_generate_waveguide.clicked.connect(self.generate_waveguide)
             self.pushButton_save_button.clicked.connect(self.on_click2)
@@ -216,29 +237,21 @@ if __name__ == "__main__":
 
         @pyqtSlot()
         def generate_waveguide(self):
-            # GLUE CODE #2: Get Parameters from LineEdits
-            def value(w):
-                if w.text() == "":
-                    msg = QtWidgets.QMessageBox()  # EXCEPTION MESSAGE ONE
-                    msg.setIcon(2)
-                    msg.setText("You cannot leave the inputs blank")
-                    msg.setWindowTitle("Error")
-                    msg.exec_()
-                    return sys.exit()
-                else:
-                    w = float(w.text())
-                    return w
-
-            # UI Layout:
-            # (1) Throat Diameter (mm)          (4) Width (mm)
-            # N/A       (5) Height (mm)
-            # (3) Coverage Angle (deg)OUTPUT        (6) Depth Factor
-
-            throat_diameter = value(self.lineEdit_throat_diameter)  # (1)
-            angle_factor = value(self.lineEdit_angle_factor)  # (3)
-            width = value(self.lineEdit_width)  # (4)
-            height = value(self.lineEdit_height)  # (5)
-            depth_factor = value(self.lineEdit_depth_factor)  # (6)
+            # Get Parameters from LineEdits
+            throat_diameter = float(self.lineEdit_throat_diameter.text())  # (1)
+            angle_factor = float(self.lineEdit_angle_factor.text())  # (3)
+            width = float(self.lineEdit_width.text())  # (4)
+            height = float(self.lineEdit_height.text())  # (5)
+            depth_factor = float(self.lineEdit_depth_factor.text())  # (6)
+            # Check if phase plug parameters are blank or have data
+            try:
+                phase_plug_dia = float(self.lineEdit_plug_diameter.text())
+                dome_dia = float(self.lineEdit_dome_diameter.text())
+                phase_plug_offset = float(self.lineEdit_plugoffset.text())
+            except:
+                phase_plug_dia = 0
+                dome_dia = 0
+                phase_plug_offset = 0
 
             # GLUE CODE #3: deal with matplotlib
             # overlay widget and widget_2 with two canvas matplotlib can draw into
@@ -246,13 +259,16 @@ if __name__ == "__main__":
             self.canvas2 = MplCanvas(self, width=5, height=4, dpi=100)
             ax = [self.canvas1.axes, self.canvas2.axes]
 
-            self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.coverage_angle = main_calc(
+            self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.coverage_angle, self.phaseplug = main_calc(
                 ax,
                 throat_diameter,
                 width,
                 height,
                 depth_factor,
-                angle_factor
+                angle_factor,
+                phase_plug_dia,
+                dome_dia,
+                phase_plug_offset
             )
             cutoff_freq = cutoff_frequency(self.coverage_angle, throat_diameter)
 
@@ -273,17 +289,21 @@ if __name__ == "__main__":
             ellipse_array = self.ellipse_array
             hor_array = self.hor_array
             ver_array = self.ver_array
+            phase_plug = self.phaseplug
 
             save_text = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
 
-            save_text_data(circle_array, ellipse_array, hor_array, ver_array, save_text)
+            save_text_data(circle_array, ellipse_array, hor_array, ver_array, phase_plug, save_text)
 
         def check_state(self, state):
 
             if state == 0:
-                self.groupBox_phaseplug.setEnabled(True)
-            else:
                 self.groupBox_phaseplug.setEnabled(False)
+                self.lineEdit_dome_diameter.clear()
+                self.lineEdit_plug_diameter.clear()
+                self.lineEdit_plugoffset.clear()
+            else:
+                self.groupBox_phaseplug.setEnabled(True)
 
 
     # MAIN APP
