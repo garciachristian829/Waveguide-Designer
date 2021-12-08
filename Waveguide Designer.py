@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import matplotlib as mpl
 import sys
@@ -8,9 +7,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
-
-# finally added to github
-import mainGUI
 
 mpl.use("Qt5Agg")
 mpl.rcParams["toolbar"] = "None"  # Get rid of toolbar
@@ -35,7 +31,7 @@ def z_waveguide_contour(x_array, depth_factor, angle_factor, throat):
 def ellipse_contour(a, b):
     a = a / 2
     b = b / 2
-    ellipse_steps = np.linspace(0, 0.5 * math.pi, 100)
+    ellipse_steps = np.linspace(0, 0.5 * np.pi, 100)
     x_ellipse_array = np.array([])
     y_ellipse_array = np.array([])
     for h in range(100):
@@ -46,7 +42,7 @@ def ellipse_contour(a, b):
 
 def circle_contour(throat):
     throat = (throat / 2)
-    circle_steps = np.linspace(0, 0.5 * math.pi, 100)
+    circle_steps = np.linspace(0, 0.5 * np.pi, 100)
     x_circle_array = np.array([])
     y_circle_array = np.array([])
     for j in range(100):
@@ -58,7 +54,7 @@ def circle_contour(throat):
 def coverage_calc(x_1, y_1, x_2, y_2):
     slope = (y_1 - y_2) / (x_1 - x_2)
 
-    angle = math.degrees(math.atan(slope))
+    angle = np.degrees(np.arctan(slope))
 
     coverage_angle = 180 - (angle * 2)
 
@@ -148,6 +144,8 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
 
     ax[0].set_aspect('auto')
     ax[1].set_aspect('auto')
+    ax[0].axis('equal')
+    ax[1].axis('equal')
 
     plt.tight_layout()
 
@@ -162,11 +160,19 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
 
 
 def save_text_data(circle_array, ellipse_array, hor_array, ver_array, phase_plug, save_text):
-    np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
-    np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
-    np.savetxt(save_text + "/hor.txt", hor_array, delimiter=" ")
-    np.savetxt(save_text + "/ver.txt", ver_array, delimiter=" ")
-    np.savetxt(save_text + "/phase_plug.txt", phase_plug, delimiter=" ")
+
+    if not phase_plug.any():
+        np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
+        np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
+        np.savetxt(save_text + "/hor.txt", hor_array, delimiter=" ")
+        np.savetxt(save_text + "/ver.txt", ver_array, delimiter=" ")
+
+    else:
+        np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
+        np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
+        np.savetxt(save_text + "/hor.txt", hor_array, delimiter=" ")
+        np.savetxt(save_text + "/ver.txt", ver_array, delimiter=" ")
+        np.savetxt(save_text + "/phase_plug.txt", phase_plug, delimiter=" ")
 
     return ()
 
@@ -176,7 +182,7 @@ def cutoff_frequency(coverage_angle, throat_diameter):
 
     throat_radius = (throat_diameter / 2) / 1000
 
-    cutoff_freq = (44 * (math.radians(math.sin(coverage_angle)) / throat_radius)) * (-1)
+    cutoff_freq = (44 * (np.radians(np.sin(coverage_angle)) / throat_radius)) * (-1)
 
     return cutoff_freq
 
@@ -188,21 +194,21 @@ def phase_plug_calc(plug_dia, dome_dia, plug_offset):
     y_phase_plug_array = np.array([])
 
     if plug_dia == dome_dia:
-        circle_steps = np.linspace(0, 0.5 * math.pi, 100)
+        circle_steps = np.linspace(0, 0.5 * np.pi, 100)
 
         for j in range(100):
             x_phase_plug_array = np.append(x_phase_plug_array, dome_dia * np.cos(circle_steps[j]))
             y_phase_plug_array = np.append(y_phase_plug_array, (dome_dia * np.sin(circle_steps[j])) + plug_offset)
 
     elif plug_dia < dome_dia > 0:
-        alpha_angle = math.asin(plug_dia / dome_dia)
-        print(alpha_angle)
-        circle_steps = np.linspace(alpha_angle, 0.5 * math.pi, 100)
+        alpha_angle = (np.pi * 0.5) - np.arcsin(plug_dia / dome_dia)
+
+        circle_steps = np.linspace(np.pi * 0.5, alpha_angle, 100)
 
         for j in range(100):
             x_phase_plug_array = np.append(x_phase_plug_array, dome_dia * np.cos(circle_steps[j]))
             y_phase_plug_array = np.append(y_phase_plug_array, (dome_dia * np.sin(circle_steps[j])) + plug_offset)
-        print(x_phase_plug_array)
+
     return x_phase_plug_array, y_phase_plug_array
 
 
@@ -214,6 +220,7 @@ if __name__ == "__main__":
         Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
+
 
     # GLUE CODE: deal with matplotlib
     class MplCanvas(FigureCanvasQTAgg):
