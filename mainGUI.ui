@@ -937,7 +937,7 @@
       </property>
       <property name="font">
        <font>
-        <pointsize>9</pointsize>
+        <pointsize>12</pointsize>
         <weight>75</weight>
         <bold>true</bold>
        </font>
@@ -1003,6 +1003,11 @@
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
+         <property name="font">
+          <font>
+           <pointsize>13</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt;Throat Diameter (mm)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
@@ -1052,7 +1057,7 @@
       </property>
       <property name="font">
        <font>
-        <pointsize>9</pointsize>
+        <pointsize>12</pointsize>
         <weight>75</weight>
         <bold>true</bold>
        </font>
@@ -1067,7 +1072,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_6">
          <property name="text">
-          <string>Plug Diameter</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Plug Diameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1077,7 +1082,7 @@
        <item row="2" column="0">
         <widget class="QLabel" name="label_8">
          <property name="text">
-          <string>Plug offset</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Plug offset&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1087,7 +1092,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>Dome Diameter</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Dome Diameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1107,7 +1112,7 @@
       </property>
       <property name="font">
        <font>
-        <pointsize>9</pointsize>
+        <pointsize>12</pointsize>
         <weight>75</weight>
         <bold>true</bold>
        </font>
@@ -1122,7 +1127,7 @@
        <item row="1" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
         <widget class="QLabel" name="label_9">
          <property name="text">
-          <string>Coverage Angle</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coverage Angle&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1131,6 +1136,9 @@
          <property name="focusPolicy">
           <enum>Qt::NoFocus</enum>
          </property>
+         <property name="toolTip">
+          <string>Coverage angle for half of waveguide</string>
+         </property>
         </widget>
        </item>
        <item row="4" column="0" alignment="Qt::AlignVCenter">
@@ -1138,12 +1146,15 @@
          <property name="focusPolicy">
           <enum>Qt::NoFocus</enum>
          </property>
+         <property name="toolTip">
+          <string>Calculated Cutoff Frequency</string>
+         </property>
         </widget>
        </item>
        <item row="3" column="0" alignment="Qt::AlignHCenter">
         <widget class="QLabel" name="label_10">
          <property name="text">
-          <string>Cutoff Frequency</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Cutoff Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1187,6 +1198,12 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
           <string>Generate 
 Waveguide</string>
@@ -1200,6 +1217,12 @@ Waveguide</string>
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
          </property>
          <property name="text">
           <string>Save Waveguide</string>
@@ -1225,6 +1248,7 @@ Waveguide</string>
      <string>File</string>
     </property>
     <addaction name="actionSave_Parameters"/>
+    <addaction name="actionLoad_Parameters"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -1232,6 +1256,11 @@ Waveguide</string>
   <action name="actionSave_Parameters">
    <property name="text">
     <string>Save Parameters</string>
+   </property>
+  </action>
+  <action name="actionLoad_Parameters">
+   <property name="text">
+    <string>Load Parameters</string>
    </property>
   </action>
  </widget>

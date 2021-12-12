@@ -1,8 +1,10 @@
+import inspect
+
 import numpy as np
 import matplotlib as mpl
 import sys
 
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -82,7 +84,6 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
         z_array = np.append(z_array, z_waveguide_contour(x_array[i], depth_fact, angle_fact, waveguide_throat))
 
     # calculate coverage angle
-
     calc_coverage_angle = coverage_calc(x_array[49], z_array[49], x_array[51], z_array[51])
 
     # calculate data for ellipse
@@ -160,7 +161,6 @@ def main_calc(ax, waveguide_throat, ellipse_x, ellipse_y, depth_fact, angle_fact
 
 
 def save_text_data(circle_array, ellipse_array, hor_array, ver_array, phase_plug, save_text):
-
     if not phase_plug.any():
         np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
         np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
@@ -220,7 +220,6 @@ if __name__ == "__main__":
         Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot
-
 
     # GLUE CODE: deal with matplotlib
     class MplCanvas(FigureCanvasQTAgg):
