@@ -1,6 +1,8 @@
 import math
 import numpy as np
 import matplotlib as mpl
+import pyvista
+import pyvista as pv
 import sys
 
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -77,8 +79,6 @@ def cutoff_frequency(coverage_angle, throat_diameter):
 
     throat_radius = (throat_diameter / 2) / 1000
 
-    print(coverage_angle, throat_radius)
-
     cutoff_freq = (44 * (math.radians(math.sin(coverage_angle)) / throat_radius)) * (-1)
 
     return cutoff_freq
@@ -109,8 +109,6 @@ for i in range(array_length):
 
     z_array = np.append(z_array, z_waveguide_contour(x_array[i], depth_fact, angle_fact, waveguide_throat))
 
-
-print(x_array)
 # calculate coverage angle
 
 calc_coverage_angle = coverage_calc(x_array[49], z_array[49], x_array[51], z_array[51])
@@ -125,6 +123,12 @@ ellipse_z = np.full(shape=array_length, fill_value=ellipse_height)
 
 # Calculate data for throat
 circle_x, circle_y = circle_contour(waveguide_throat)
+
+
+# X = np.concatenate((circle_x, x_ellipse_data, x_array, zero_array))
+# Y = np.concatenate((circle_y, y_ellipse_data, zero_array, y_array))
+# Z = np.concatenate((zero_array, ellipse_z, z_array, z_array))
+
 
 # Reshape arrays into 1 column, multiple rows
 x_array = x_array.reshape(-1, 1)
@@ -144,26 +148,30 @@ Y = np.concatenate((circle_y, y_ellipse_data, zero_array, y_array), axis=0)
 Z = np.concatenate((zero_array, ellipse_z, z_array, z_array), axis=0)
 
 
-circle_array = np.concatenate(
-    (circle_x, circle_y, zero_array), axis=1
-)
-ellipse_array = np.concatenate(
-    (x_ellipse_data, y_ellipse_data, ellipse_z), axis=1
-)
-hor_array = np.concatenate(
-    (x_array, zero_array, z_array), axis=1
-)
-ver_array = np.concatenate(
-    (zero_array, y_array, z_array), axis=1
-)
+# circle_array = np.concatenate(
+#     (circle_x, circle_y, zero_array), axis=1
+# )
+# ellipse_array = np.concatenate(
+#     (x_ellipse_data, y_ellipse_data, ellipse_z), axis=1
+# )
+# hor_array = np.concatenate(
+#     (x_array, zero_array, z_array), axis=1
+# )
+# ver_array = np.concatenate(
+#     (zero_array, y_array, z_array), axis=1
+# )
 
-pts = mlab.points3d(X, Y, Z)
-mesh = mlab.pipeline.delaunay2d(pts)
-pts.remove()
-mlab.pipeline.surface(mesh)
+xyz = np.concatenate((X, Y, Z), axis=-1)
+
+cloud = pv.PolyData(xyz)
+
+surf = cloud.delaunay_2d()
+surf.plot(show_edges=True)
 
 
-mlab.show()
+
+
+
 
 # if __name__ == "__main__":
 #
