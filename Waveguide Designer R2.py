@@ -37,35 +37,37 @@ def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor
 
     waveguide = pv.StructuredGrid(x, y, z)
 
-    throat = np.array([np.column_stack((x[0, 0:array_length], y[0, 0:array_length], z[0, 0:array_length]))])
-    ellipse = np.array([np.column_stack((x[array_length - 1, 0:array_length], y[array_length - 1, 0:array_length],
-                                         z[array_length - 1, 0:array_length]))])
+    throat = np.array(np.column_stack((x[0, 0:array_length], y[0, 0:array_length],
+                                       z[0, 0:array_length])))
+    ellipse = np.array(np.column_stack((x[array_length - 1, 0:array_length], y[array_length - 1, 0:array_length],
+                                        z[array_length - 1, 0:array_length])))
     horizontal_line = np.array(
-        [np.column_stack((x[0:array_length, 0], y[0:array_length, 0], z[0:array_length, 0]))])
-    vertical_line = np.array([np.column_stack((x[0:array_length, 0], y[0:array_length, 0], z[0:array_length, 0]))])
-    center_line = np.array([np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50]))])
+        np.column_stack((x[0:array_length, 0], y[0:array_length, 0], z[0:array_length, 0])))
+    vertical_line = np.array(np.column_stack((x[0:array_length, array_length - 1], y[0:array_length, array_length - 1],
+                                              z[0:array_length, array_length - 1])))
+    center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
 
-    calc_coverage_angle = coverage_calc(horizontal_line[0, 50, 0], horizontal_line[0, 50, 1],
-                                        horizontal_line[0, 51, 0], horizontal_line[0, 51, 1])
+    calc_coverage_angle = coverage_calc(horizontal_line[50, 0], horizontal_line[50, 1],
+                                        horizontal_line[51, 0], horizontal_line[51, 1])
 
     return throat, ellipse, horizontal_line, vertical_line, center_line, calc_coverage_angle, waveguide
 
 
-def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, phase_plug, save_text):
-    if not phase_plug.any():
+def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, save_text, phase_plug):
+    if phase_plug.size == 0:
         np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
-        np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
-        np.savetxt(save_text + "/hor.txt", hor_array, delimiter=" ")
-        np.savetxt(save_text + "/ver.txt", ver_array, delimiter=" ")
-        np.savetxt(save_text + "/cen.txt", cen_array, delimiter=" ")
+        np.savetxt(save_text + "/Ellipse.txt", ellipse_array, delimiter=" ")
+        np.savetxt(save_text + "/Horizontal.txt", hor_array, delimiter=" ")
+        np.savetxt(save_text + "/Vertical.txt", ver_array, delimiter=" ")
+        np.savetxt(save_text + "/Center.txt", cen_array, delimiter=" ")
 
     else:
         np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
-        np.savetxt(save_text + "/ellipse.txt", ellipse_array, delimiter=" ")
-        np.savetxt(save_text + "/hor.txt", hor_array, delimiter=" ")
-        np.savetxt(save_text + "/ver.txt", ver_array, delimiter=" ")
-        np.savetxt(save_text + "/cen.txt", cen_array, delimiter=" ")
-        np.savetxt(save_text + "/phase_plug.txt", phase_plug, delimiter=" ")
+        np.savetxt(save_text + "/Ellipse.txt", ellipse_array, delimiter=" ")
+        np.savetxt(save_text + "/Horizontal.txt", hor_array, delimiter=" ")
+        np.savetxt(save_text + "/Vertical.txt", ver_array, delimiter=" ")
+        np.savetxt(save_text + "/Center.txt", cen_array, delimiter=" ")
+        np.savetxt(save_text + "/Phaseplug.txt", phase_plug, delimiter=" ")
 
     return ()
 
@@ -101,8 +103,8 @@ def phase_plug_calc(plug_dia, dome_dia, plug_offset, array_length):
             abs((dome_dia / 2) ** 2 - (x_phaseplug ** 2) - (y_phaseplug ** 2))) + plug_offset - plug_modification
 
     phaseplug = pv.StructuredGrid(x_phaseplug, y_phaseplug, z_phaseplug)
-    phaseplug_line = np.array([np.column_stack((x_phaseplug[0:array_length, 50], y_phaseplug[0:array_length, 50],
-                                                z_phaseplug[0:array_length, 50]))])
+    phaseplug_line = np.array(np.column_stack((x_phaseplug[0:array_length, 0], y_phaseplug[0:array_length, 0],
+                                               z_phaseplug[0:array_length, 0])))
 
     return phaseplug, phaseplug_line
 
@@ -113,13 +115,16 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         # Define plotter and then attach to gridlayout to allow resizing with window
         self.plotter = QtInteractor(self.frame)
+        self.plotter.set_background(color='white')
         self.gridLayout_5.addWidget(self.plotter.interactor)
         # Set checkbox to not checked
         self.groupBox_phaseplug.setEnabled(False)
         # Define buttons and checkbox state check
         self.pushButton_generate_waveguide.clicked.connect(self.generate_waveguide)
         self.pushButton_save_button.clicked.connect(self.on_click2)
-        self.checkBox_phaseplug.stateChanged.connect(self.check_state, self.checkBox_phaseplug.isChecked())
+        self.checkBox_phaseplug.stateChanged.connect(self.check_state)
+        self.ver_checkbox.stateChanged.connect(self.check_cross_checkbox)
+        self.hor_checkbox.stateChanged.connect(self.check_cross_checkbox)
 
         self.show()
 
@@ -134,7 +139,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         height = float(self.lineEdit_height.text())  # (5)
         depth_factor = float(self.lineEdit_depth_factor.text())  # (6)
 
-        self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.center_array, self.coverage_angle,\
+        self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.center_array, self.coverage_angle, \
         waveguide_mesh = main_calc(throat_diameter, width, height, depth_factor, angle_factor)
 
         cutoff_freq = cutoff_frequency(self.coverage_angle, throat_diameter)
@@ -144,6 +149,9 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.lineEdit_coverage_angle.setText(coverage_angle)
         self.lineEdit_cutoff_freq.setText(cutoff_freq)
 
+        merged_hor = waveguide_mesh.reflect((1, 0, 0))
+        waveguide_hor_holder = waveguide_mesh.merge(merged_hor)
+
         # Reflect mesh twice and merge twice to create a entire surface
         waveguide_mesh_reflected = waveguide_mesh.reflect((0, 1, 0))
         merged = waveguide_mesh.merge(waveguide_mesh_reflected)
@@ -151,8 +159,15 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         waveguide_mesh = merged.merge(merged_mirror)
         # Select scalars to plot "cmap" colors without needing matplotlib
         waveguide_mesh['Data'] = waveguide_mesh.points[:, 2]
+        self.waveguide_whole = waveguide_mesh
+        # Grab sections of waveguide to plot as horizontal or vertical cross sections
+        merged['Data'] = merged.points[:, 2]
+        waveguide_hor_holder['Data'] = waveguide_hor_holder.points[:, 2]
+        self.waveguide_ver = merged
+        self.waveguide_hor = waveguide_hor_holder
 
         if not (self.checkBox_phaseplug.isChecked()):
+            self.phaseplug_array = np.array([])
 
             self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
 
@@ -166,13 +181,19 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             phaseplug_mesh, self.phaseplug_array = phase_plug_calc(phase_plug_dia, dome_dia, phase_plug_offset,
                                                                    array_length=100)
+            pp_merged_hor = phaseplug_mesh.reflect((1, 0, 0))
+            pp_hor_holder = phaseplug_mesh.merge(pp_merged_hor)
 
             phaseplug_mesh_reflected = phaseplug_mesh.reflect((0, 1, 0))
-            merged = phaseplug_mesh.merge(phaseplug_mesh_reflected)
-            merged_mirror = merged.reflect((1, 0, 0))
-            phaseplug_mesh = merged.merge(merged_mirror)
-
+            merged_mesh = phaseplug_mesh.merge(phaseplug_mesh_reflected)
+            merged_mirror = merged_mesh.reflect((1, 0, 0))
+            phaseplug_mesh = merged_mesh.merge(merged_mirror)
+            merged_mesh['Data'] = merged_mesh.points[:, 2]
+            self.phaseplug_ver = merged_mesh
             phaseplug_mesh['Data'] = phaseplug_mesh.points[:, 2]
+            pp_hor_holder['Data'] = pp_hor_holder.points[:, 2]
+            self.phaseplug_whole = phaseplug_mesh
+            self.phaseplug_hor = pp_hor_holder
 
             self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
             self.plotter.add_mesh(phaseplug_mesh, show_scalar_bar=False)
@@ -180,6 +201,9 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.show()
 
     def on_click2(self):
+
+        save_text = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
+
         circle_array = self.circle_array
         ellipse_array = self.ellipse_array
         hor_array = self.hor_array
@@ -187,9 +211,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         cen_array = self.center_array
         phase_plug = self.phaseplug_array
 
-        save_text = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
-
-        save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, phase_plug, save_text)
+        save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, save_text, phase_plug)
 
     def check_state(self, state):
         # This function will check the state of the phaseplug_checkbox and if it is checked it will enable it and accept
@@ -202,8 +224,46 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.groupBox_phaseplug.setEnabled(True)
 
-        return state
+    def check_cross_checkbox(self, state):
+        if self.checkBox_phaseplug.isChecked():
 
+            if state == QtCore.Qt.Checked:
+
+                if self.sender() == self.ver_checkbox:
+                    self.hor_checkbox.setChecked(False)
+                    self.plotter.clear()
+                    self.plotter.add_mesh(self.waveguide_ver, show_scalar_bar=False)
+                    self.plotter.add_mesh(self.phaseplug_ver, show_scalar_bar=False)
+                    self.plotter.view_yz(negative=True)
+
+                elif self.sender() == self.hor_checkbox:
+                    self.ver_checkbox.setChecked(False)
+                    self.plotter.clear()
+                    self.plotter.add_mesh(self.waveguide_hor, show_scalar_bar=False)
+                    self.plotter.add_mesh(self.phaseplug_hor, show_scalar_bar=False)
+                    self.plotter.view_xz()
+            elif state != QtCore.Qt.Checked:
+                self.plotter.clear()
+                self.plotter.add_mesh(self.phaseplug_whole, show_scalar_bar=False)
+                self.plotter.add_mesh(self.waveguide_whole, show_scalar_bar=False)
+
+        else:
+            if state == QtCore.Qt.Checked:
+
+                if self.sender() == self.ver_checkbox:
+                    self.hor_checkbox.setChecked(False)
+                    self.plotter.clear()
+                    self.plotter.add_mesh(self.waveguide_ver, show_scalar_bar=False)
+                    self.plotter.view_yz(negative=True)
+
+                elif self.sender() == self.hor_checkbox:
+                    self.ver_checkbox.setChecked(False)
+                    self.plotter.clear()
+                    self.plotter.add_mesh(self.waveguide_hor, show_scalar_bar=False)
+                    self.plotter.view_xz()
+            elif state != QtCore.Qt.Checked:
+                self.plotter.clear()
+                self.plotter.add_mesh(self.waveguide_whole, show_scalar_bar=False)
 
 if __name__ == "__main__":
     # MAIN APP
