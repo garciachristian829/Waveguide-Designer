@@ -116,6 +116,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Define plotter and then attach to gridlayout to allow resizing with window
         self.plotter = QtInteractor(self.frame)
         self.plotter.set_background(color='white')
+        self.plotter.show_axes()
+
         self.gridLayout_5.addWidget(self.plotter.interactor)
         # Set checkbox to not checked
         self.groupBox_phaseplug.setEnabled(False)
@@ -123,6 +125,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_generate_waveguide.clicked.connect(self.generate_waveguide)
         self.pushButton_save_button.clicked.connect(self.on_click2)
         self.checkBox_phaseplug.stateChanged.connect(self.check_state)
+
         self.ver_checkbox.stateChanged.connect(self.check_cross_checkbox)
         self.hor_checkbox.stateChanged.connect(self.check_cross_checkbox)
 
@@ -132,7 +135,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def generate_waveguide(self):
         # Clear plotter each time to plot new waveguides
         self.plotter.clear()
-        # Get Parameters from LineEdits
+        # Get Parameters from LineEdits in Waveguide Groupbox
         throat_diameter = float(self.lineEdit_throat_diameter.text())  # (1)
         angle_factor = float(self.lineEdit_angle_factor.text())  # (3)
         width = float(self.lineEdit_width.text())  # (4)
@@ -141,6 +144,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.center_array, self.coverage_angle, \
         waveguide_mesh = main_calc(throat_diameter, width, height, depth_factor, angle_factor)
+        # max height of waveguide, passed to label
+        z_max = round(np.max(self.ver_array[:, 2]), 2)
 
         cutoff_freq = cutoff_frequency(self.coverage_angle, throat_diameter)
 
@@ -149,9 +154,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.lineEdit_coverage_angle.setText(coverage_angle)
         self.lineEdit_cutoff_freq.setText(cutoff_freq)
 
-        merged_hor = waveguide_mesh.reflect((1, 0, 0))
-        waveguide_hor_holder = waveguide_mesh.merge(merged_hor)
-
         # Reflect mesh twice and merge twice to create a entire surface
         waveguide_mesh_reflected = waveguide_mesh.reflect((0, 1, 0))
         merged = waveguide_mesh.merge(waveguide_mesh_reflected)
@@ -159,48 +161,44 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         waveguide_mesh = merged.merge(merged_mirror)
         # Select scalars to plot "cmap" colors without needing matplotlib
         waveguide_mesh['Data'] = waveguide_mesh.points[:, 2]
+        # Define mesh to be used with cross-section checkboxes and define waveguide slice variables
         self.waveguide_whole = waveguide_mesh
-        # Grab sections of waveguide to plot as horizontal or vertical cross sections
-        merged['Data'] = merged.points[:, 2]
-        waveguide_hor_holder['Data'] = waveguide_hor_holder.points[:, 2]
-        self.waveguide_ver = merged
-        self.waveguide_hor = waveguide_hor_holder
+        self.waveguide_slice_x = waveguide_mesh.slice(normal='x', origin=(0.1, 0, 0))
+        self.waveguide_slice_y = waveguide_mesh.slice(normal='y')
 
         if not (self.checkBox_phaseplug.isChecked()):
+            # If phaseplug checkbox is not checked, pass an empty array to avoid any issues
             self.phaseplug_array = np.array([])
 
             self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
-
-            self.show()
+            self.plotter.add_text(f'Waveguide height is: ({z_max}) mm', color='black', font_size=8)
 
         else:
-
+            # If checkbox is checked, gather data from PhasePlug Groupbox
             phase_plug_dia = float(self.lineEdit_plug_diameter.text())
             dome_dia = float(self.lineEdit_dome_diameter.text())
             phase_plug_offset = float(self.lineEdit_plugoffset.text())
-
+            # Calculate phaseplug mesh and array
             phaseplug_mesh, self.phaseplug_array = phase_plug_calc(phase_plug_dia, dome_dia, phase_plug_offset,
                                                                    array_length=100)
-            pp_merged_hor = phaseplug_mesh.reflect((1, 0, 0))
-            pp_hor_holder = phaseplug_mesh.merge(pp_merged_hor)
-
+            # mirror meshes and form phasing plug
             phaseplug_mesh_reflected = phaseplug_mesh.reflect((0, 1, 0))
             merged_mesh = phaseplug_mesh.merge(phaseplug_mesh_reflected)
             merged_mirror = merged_mesh.reflect((1, 0, 0))
             phaseplug_mesh = merged_mesh.merge(merged_mirror)
-            merged_mesh['Data'] = merged_mesh.points[:, 2]
-            self.phaseplug_ver = merged_mesh
+
             phaseplug_mesh['Data'] = phaseplug_mesh.points[:, 2]
-            pp_hor_holder['Data'] = pp_hor_holder.points[:, 2]
+            # Define global variable to hold phaseplug mesh and define xy phaseplug slices
             self.phaseplug_whole = phaseplug_mesh
-            self.phaseplug_hor = pp_hor_holder
+            self.phaseplug_slice_x = phaseplug_mesh.slice(normal='x', origin=(0.1, 0, 0))
+            self.phaseplug_slice_y = phaseplug_mesh.slice(normal='y')
 
             self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
             self.plotter.add_mesh(phaseplug_mesh, show_scalar_bar=False)
-
-            self.show()
+            self.plotter.add_text(f'Waveguide height is: ({z_max}) mm', color='black', font_size=8)
 
     def on_click2(self):
+        # Button to save text to folder. Folder is specified by user.
 
         save_text = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
 
@@ -225,6 +223,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.groupBox_phaseplug.setEnabled(True)
 
     def check_cross_checkbox(self, state):
+        # Vertical and Horizontal checkboxes are checked via if/elif loop. If checked, if loop is run, else runs not
+        # checked loop. If both checkboxes are unchecked, replot the waveguide.
         if self.checkBox_phaseplug.isChecked():
 
             if state == QtCore.Qt.Checked:
@@ -232,16 +232,16 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.sender() == self.ver_checkbox:
                     self.hor_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_ver, show_scalar_bar=False)
-                    self.plotter.add_mesh(self.phaseplug_ver, show_scalar_bar=False)
-                    self.plotter.view_yz(negative=True)
+                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
+                    self.plotter.add_mesh(self.phaseplug_slice_y, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_xz()
 
                 elif self.sender() == self.hor_checkbox:
                     self.ver_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_hor, show_scalar_bar=False)
-                    self.plotter.add_mesh(self.phaseplug_hor, show_scalar_bar=False)
-                    self.plotter.view_xz()
+                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
+                    self.plotter.add_mesh(self.phaseplug_slice_x, show_scalar_bar=False,line_width=2)
+                    self.plotter.view_yz()
             elif state != QtCore.Qt.Checked:
                 self.plotter.clear()
                 self.plotter.add_mesh(self.phaseplug_whole, show_scalar_bar=False)
@@ -253,17 +253,18 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.sender() == self.ver_checkbox:
                     self.hor_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_ver, show_scalar_bar=False)
-                    self.plotter.view_yz(negative=True)
+                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_xz()
 
                 elif self.sender() == self.hor_checkbox:
                     self.ver_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_hor, show_scalar_bar=False)
-                    self.plotter.view_xz()
+                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_yz()
             elif state != QtCore.Qt.Checked:
                 self.plotter.clear()
                 self.plotter.add_mesh(self.waveguide_whole, show_scalar_bar=False)
+
 
 if __name__ == "__main__":
     # MAIN APP
