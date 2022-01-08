@@ -4,11 +4,11 @@
 block_cipher = None
 
 
-a = Analysis(['Waveguide Designer.py'],
+a = Analysis(['Waveguide Designer R2.py'],
              pathex=[],
              binaries=[],
              datas=[],
-             hiddenimports=[],
+             hiddenimports=[‘vtkmodules’,‘vtkmodules.all’,‘vtkmodules.qt.QVTKRenderWindowInteractor’,‘vtkmodules.util’,‘vtkmodules.util.numpy_support’,‘vtkmodules.numpy_interface’, ‘vtkmodules.numpy_interface.dataset_adapter’],
              hookspath=[],
              hooksconfig={},
              runtime_hooks=[],
@@ -37,4 +37,4 @@ exe = EXE(pyz,
           disable_windowed_traceback=False,
           target_arch=None,
           codesign_identity=None,
-          entitlements_file=None )
+          entitlements_file=None , icon='Waveguide.ico')

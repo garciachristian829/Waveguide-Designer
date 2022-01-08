@@ -47,8 +47,8 @@ def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor
                                               z[0:array_length, array_length - 1])))
     center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
 
-    calc_coverage_angle = coverage_calc(horizontal_line[50, 0], horizontal_line[50, 1],
-                                        horizontal_line[51, 0], horizontal_line[51, 1])
+    calc_coverage_angle = coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
+                                        horizontal_line[51, 0], horizontal_line[51, 2])
 
     return throat, ellipse, horizontal_line, vertical_line, center_line, calc_coverage_angle, waveguide
 
@@ -113,7 +113,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
         self.setupUi(self)
-        # Define plotter and then attach to gridlayout to allow resizing with window
+        # Define plotter and then attach to gridlayout to allow resizing with window, add axes to identify xyz
         self.plotter = QtInteractor(self.frame)
         self.plotter.set_background(color='white')
         self.plotter.show_axes()
@@ -271,3 +271,4 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = MyMainWindow()
     sys.exit(app.exec_())
+

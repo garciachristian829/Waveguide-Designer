@@ -28,6 +28,10 @@
   <property name="windowTitle">
    <string>Waveguide Designer</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>Waveguide.ico</normaloff>Waveguide.ico</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">groupBox_3::border:0</string>
   </property>
