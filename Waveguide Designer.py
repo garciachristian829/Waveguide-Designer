@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib as mpl
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
     # Run with QT5 UI
     import sys
-    from mainGUI import (
+    from Archive.mainGUI import (
         Ui_MainWindow
     )  # from <filename> of the UI python initialization (content not changed)
     from PyQt5.QtCore import pyqtSlot

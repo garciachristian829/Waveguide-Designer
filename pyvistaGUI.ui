@@ -30,10 +30,16 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>Waveguide.ico</normaloff>Waveguide.ico</iconset>
+    <normaloff>Icon/Waveguide_Designer.ico</normaloff>Icon/Waveguide_Designer.ico</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">groupBox_3::border:0</string>
+  </property>
+  <property name="iconSize">
+   <size>
+    <width>32</width>
+    <height>32</height>
+   </size>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="focusPolicy">
