@@ -11,6 +11,7 @@ from PyQt5.QtCore import pyqtSlot
 
 
 def coverage_calc(x_1, y_1, x_2, y_2):
+    # Calculate Slope
     slope = (y_1 - y_2) / (x_1 - x_2)
 
     angle = np.degrees(np.arctan(slope))
