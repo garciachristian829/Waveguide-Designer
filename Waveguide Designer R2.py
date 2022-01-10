@@ -2,7 +2,7 @@ import numpy as np
 import pyvista as pv
 import sys
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from qtpy import QtWidgets
 from pyvistaqt import QtInteractor
 from pyvistaGUI import (Ui_MainWindow)
@@ -128,6 +128,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.ver_checkbox.stateChanged.connect(self.check_cross_checkbox)
         self.hor_checkbox.stateChanged.connect(self.check_cross_checkbox)
+        self.setWindowIcon(QtGui.QIcon('Waveguide_Designer.ico'))
 
         self.show()
 

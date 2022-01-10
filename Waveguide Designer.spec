@@ -20,6 +20,8 @@ a = Analysis(['Waveguide Designer R2.py'],
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
+a.datas += [('Waveguide_Designer.ico', 'D:\\Waveguide Designer\\Icon\\Waveguide_Designer.ico', 'DATA')]
+
 exe = EXE(pyz,
           a.scripts, 
           [],
@@ -33,7 +35,7 @@ exe = EXE(pyz,
           disable_windowed_traceback=False,
           target_arch=None,
           codesign_identity=None,
-          entitlements_file=None , icon='D:\\Waveguide Designer\\Icon\\Waveguide_Designer.ico')
+          entitlements_file=None , icon='Waveguide_Designer.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
