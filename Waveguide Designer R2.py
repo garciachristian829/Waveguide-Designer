@@ -15,7 +15,7 @@ def coverage_calc(x_1, y_1, x_2, y_2):
 
     angle = np.degrees(np.arctan(slope))
 
-    coverage_angle = 180 - (angle * 2)
+    coverage_angle = (180 - (angle * 2)) * 0.5
 
     return coverage_angle
 
@@ -73,11 +73,11 @@ def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array,
 
 
 def cutoff_frequency(coverage_angle, throat_diameter):
-    coverage_angle = coverage_angle / 2
+    coverage_angle = 0.5*(coverage_angle*(np.pi/180))
 
-    throat_radius = (throat_diameter / 2) / 1000
+    throat_radius = (throat_diameter / 2)
 
-    cutoff_freq = abs((44 * (np.radians(np.sin(coverage_angle)) / throat_radius)) * (-1))
+    cutoff_freq = (44 * (np.sin(coverage_angle) / (throat_radius / 1000)))
 
     return cutoff_freq
 
@@ -152,8 +152,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         coverage_angle = str(int(self.coverage_angle))
         cutoff_freq = str(int(cutoff_freq))
-        self.lineEdit_coverage_angle.setText(coverage_angle)
-        self.lineEdit_cutoff_freq.setText(cutoff_freq)
+        self.lineEdit_coverage_angle.setText((coverage_angle + ' deg'))
+        self.lineEdit_cutoff_freq.setText((cutoff_freq + ' Hz'))
 
         # Reflect mesh twice and merge twice to create a entire surface
         waveguide_mesh_reflected = waveguide_mesh.reflect((0, 1, 0))
