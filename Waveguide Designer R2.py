@@ -48,10 +48,14 @@ def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor
                                               z[0:array_length, array_length - 1])))
     center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
 
-    calc_coverage_angle = coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
+    hor_calc_coverage_angle = coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
                                         horizontal_line[51, 0], horizontal_line[51, 2])
 
-    return throat, ellipse, horizontal_line, vertical_line, center_line, calc_coverage_angle, waveguide
+    ver_calc_coverage_angle = coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
+                                            vertical_line[51, 1], vertical_line[51, 2])
+
+    return throat, ellipse, horizontal_line, vertical_line, center_line, hor_calc_coverage_angle,\
+           ver_calc_coverage_angle, waveguide
 
 
 def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, save_text, phase_plug):
@@ -144,16 +148,18 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         height = float(self.lineEdit_height.text())  # (5)
         depth_factor = float(self.lineEdit_depth_factor.text())  # (6)
 
-        self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.center_array, self.coverage_angle, \
-        waveguide_mesh = main_calc(throat_diameter, width, height, depth_factor, angle_factor)
+        self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.center_array, \
+        self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh \
+            = main_calc(throat_diameter, width, height, depth_factor, angle_factor)
         # max height of waveguide, passed to label
         z_max = round(np.max(self.ver_array[:, 2]), 2)
 
-        cutoff_freq = cutoff_frequency(self.coverage_angle, throat_diameter)
+        cutoff_freq = cutoff_frequency(self.hor_coverage_angle, throat_diameter)
 
-        coverage_angle = str(int(self.coverage_angle))
+        hor_coverage_angle = str(int(self.hor_coverage_angle))
+        ver_coverage_angle = str(int(self.ver_coverage_angle))
         cutoff_freq = str(int(cutoff_freq))
-        self.lineEdit_coverage_angle.setText((coverage_angle + ' deg'))
+        self.lineEdit_coverage_angle.setText((hor_coverage_angle + ' deg'))
         self.lineEdit_cutoff_freq.setText((cutoff_freq + ' Hz'))
 
         # Reflect mesh twice and merge twice to create a entire surface
@@ -274,3 +280,6 @@ if __name__ == "__main__":
     win = MyMainWindow()
     sys.exit(app.exec_())
 
+# Add vertical angle based on calcs
+# look into plane wave 1pa
+#
