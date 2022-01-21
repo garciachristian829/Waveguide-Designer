@@ -1,13 +1,14 @@
-import numpy as np
-import pyvista as pv
 import sys
 
+import numpy as np
+import pyvista as pv
 from PyQt5 import QtCore, QtWidgets, QtGui
-from qtpy import QtWidgets
-from pyvistaqt import QtInteractor
-from pyvistaGUI import (Ui_MainWindow)
 # from <filename> of the UI python initialization (content not changed)
 from PyQt5.QtCore import pyqtSlot
+from pyvistaqt import QtInteractor
+from qtpy import QtWidgets
+
+from pyvistaGUI import (Ui_MainWindow)
 
 
 def coverage_calc(x_1, y_1, x_2, y_2):
@@ -49,12 +50,12 @@ def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor
     center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
 
     hor_calc_coverage_angle = coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
-                                        horizontal_line[51, 0], horizontal_line[51, 2])
+                                            horizontal_line[51, 0], horizontal_line[51, 2])
 
     ver_calc_coverage_angle = coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
                                             vertical_line[51, 1], vertical_line[51, 2])
 
-    return throat, ellipse, horizontal_line, vertical_line, center_line, hor_calc_coverage_angle,\
+    return throat, ellipse, horizontal_line, vertical_line, center_line, hor_calc_coverage_angle, \
            ver_calc_coverage_angle, waveguide
 
 
@@ -78,7 +79,7 @@ def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array,
 
 
 def cutoff_frequency(coverage_angle, throat_diameter):
-    coverage_angle = 0.5*(coverage_angle*(np.pi/180))
+    coverage_angle = 0.5 * (coverage_angle * (np.pi / 180))
 
     throat_radius = (throat_diameter / 2)
 
@@ -135,6 +136,10 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.hor_checkbox.stateChanged.connect(self.check_cross_checkbox)
         self.setWindowIcon(QtGui.QIcon('Waveguide_Designer.ico'))
 
+        self.actionSave_Waveguide_Parameters.triggered.connect(self.parameters_save)
+        self.actionLoad_Waveguide_Parameters.triggered.connect(self.parameters_load)
+        self.actionSave_Comsol_Parameters.triggered.connect(self.comsol_parameters)
+
         self.show()
 
     @pyqtSlot()
@@ -160,6 +165,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         ver_coverage_angle = str(int(self.ver_coverage_angle))
         cutoff_freq = str(int(cutoff_freq))
         self.lineEdit_coverage_angle.setText((hor_coverage_angle + ' deg'))
+        self.lineEdit_ver_coverage_angle.setText((ver_coverage_angle + ' deg'))
         self.lineEdit_cutoff_freq.setText((cutoff_freq + ' Hz'))
 
         # Reflect mesh twice and merge twice to create a entire surface
@@ -240,16 +246,16 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.sender() == self.ver_checkbox:
                     self.hor_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.add_mesh(self.phaseplug_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_xz()
+                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
+                    self.plotter.add_mesh(self.phaseplug_slice_x, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_yz()
 
                 elif self.sender() == self.hor_checkbox:
                     self.ver_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
-                    self.plotter.add_mesh(self.phaseplug_slice_x, show_scalar_bar=False,line_width=2)
-                    self.plotter.view_yz()
+                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
+                    self.plotter.add_mesh(self.phaseplug_slice_y, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_xz()
             elif state != QtCore.Qt.Checked:
                 self.plotter.clear()
                 self.plotter.add_mesh(self.phaseplug_whole, show_scalar_bar=False)
@@ -261,17 +267,81 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.sender() == self.ver_checkbox:
                     self.hor_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_xz()
+                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_yz()
 
                 elif self.sender() == self.hor_checkbox:
                     self.ver_checkbox.setChecked(False)
                     self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_yz()
+                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
+                    self.plotter.view_xz()
             elif state != QtCore.Qt.Checked:
                 self.plotter.clear()
                 self.plotter.add_mesh(self.waveguide_whole, show_scalar_bar=False)
+
+    def parameters_save(self):
+        file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", '/', "WGP (*.wgp)")[0]
+
+        parameter_list = [str(self.lineEdit_throat_diameter.text()) + "\n",
+                          str(self.lineEdit_width.text()) + "\n",
+                          str(self.lineEdit_height.text()) + "\n",
+                          str(self.lineEdit_angle_factor.text()) + "\n",
+                          str(self.lineEdit_depth_factor.text()) + "\n",
+                          str(self.checkBox_phaseplug.isChecked()) + "\n"
+                          ]
+
+        if self.checkBox_phaseplug.isChecked():
+            parameter_phaseplug = [
+                str(self.lineEdit_plug_diameter.text()) + "\n",
+                str(self.lineEdit_dome_diameter.text()) + "\n",
+                str(self.lineEdit_plugoffset.text())
+            ]
+            parameter_list.extend(parameter_phaseplug)
+
+        file_parameters = open(file_name, "w")
+        file_parameters.writelines(parameter_list)
+
+    def parameters_load(self):
+        parameter_file = QtWidgets.QFileDialog.getOpenFileName(self, "Select Waveguide Parameter File",
+                                                               "", 'WGP (*.wgp)')[0]
+
+        parameters = open(parameter_file, "r")
+
+        content = parameters.read().splitlines()
+
+        self.lineEdit_throat_diameter.setText(content[0])
+        self.lineEdit_width.setText(content[1])
+        self.lineEdit_height.setText(content[2])
+        self.lineEdit_angle_factor.setText(content[3])
+        self.lineEdit_depth_factor.setText(content[4])
+        self.checkBox_phaseplug.setChecked(False)
+
+        if len(content) == 9:
+            self.checkBox_phaseplug.setChecked(True)
+            self.lineEdit_plug_diameter.setText(content[6])
+            self.lineEdit_dome_diameter.setText(content[7])
+            self.lineEdit_plugoffset.setText(content[8])
+
+    def comsol_parameters(self):
+        file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Comsol Parameters", '/', "txt (*.txt)")[0]
+
+        comsol_params = [
+            "x_ellipse " + str(self.lineEdit_width.text()) + "[mm] Ellipse X " + "\n",
+            "y_ellipse " + str(self.lineEdit_height.text()) + "[mm] Ellipse Y " + "\n",
+            "throat " + str(self.lineEdit_throat_diameter.text()) + "[mm] Waveguide Throat " + "\n",
+            "depth_factor " + str(self.lineEdit_depth_factor.text()) + " depth factor " + "\n",
+            "angle_factor " + str(self.lineEdit_angle_factor.text()) + " angle factor " + "\n"
+        ]
+        if self.checkBox_phaseplug.isChecked():
+            comsol_phaseplug = [
+                "plug_dia " + str(self.lineEdit_plug_diameter.text()) + "[mm] phase plug diameter " + "\n",
+                "dome_dia " + str(self.lineEdit_dome_diameter.text()) + "[mm] tweeter dome diameter " + "\n",
+                "plug_offset " + str(self.lineEdit_plugoffset.text()) + "[mm] phase plug offset " + "\n"
+            ]
+            comsol_params.extend(comsol_phaseplug)
+
+        file_parameters = open(file_name, "w")
+        file_parameters.writelines(comsol_params)
 
 
 if __name__ == "__main__":
@@ -279,7 +349,3 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = MyMainWindow()
     sys.exit(app.exec_())
-
-# Add vertical angle based on calcs
-# look into plane wave 1pa
-#
