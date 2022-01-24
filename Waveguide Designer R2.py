@@ -331,6 +331,9 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "throat " + str(self.lineEdit_throat_diameter.text()) + "[mm] Waveguide Throat " + "\n",
             "depth_factor " + str(self.lineEdit_depth_factor.text()) + " depth factor " + "\n",
             "angle_factor " + str(self.lineEdit_angle_factor.text()) + " angle factor " + "\n"
+            "plug_dia 0 [mm] phase plug diameter " + "\n",
+            "dome_dia 0 [mm] tweeter dome diameter " + "\n",
+            "plug_offset 0 [mm] phase plug offset " + "\n"
         ]
         if self.checkBox_phaseplug.isChecked():
             comsol_phaseplug = [
