@@ -22,11 +22,10 @@ def coverage_calc(x_1, y_1, x_2, y_2):
     return coverage_angle
 
 
-def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor):
+def elliptical_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor):
     array_length = 100
-
     # now create the actual structured grid
-    # 2d circular grid, one for waveguide and the other for phase plug
+    # 2d circular grid
     r, phi = np.mgrid[0:1:array_length * 1j, 0:np.pi / 2:array_length * 1j]
 
     # transform to ellipse on the outside, circle on the inside
@@ -36,8 +35,6 @@ def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor
     # compute z profile
     angle_factor = angle_factor / 10000
     z = (ellipse_x / 2 * r / angle_factor) ** (1 / depth_factor)
-
-    waveguide = pv.StructuredGrid(x, y, z)
 
     throat = np.array(np.column_stack((x[0, 0:array_length], y[0, 0:array_length],
                                        z[0, 0:array_length])))
@@ -54,9 +51,66 @@ def main_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_factor
 
     ver_calc_coverage_angle = coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
                                             vertical_line[51, 1], vertical_line[51, 2])
+    elliptical_mesh = pv.StructuredGrid(x, y, z)
 
-    return throat, ellipse, horizontal_line, vertical_line, center_line, hor_calc_coverage_angle, \
-           ver_calc_coverage_angle, waveguide
+    return throat, ellipse, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
+           ver_calc_coverage_angle, elliptical_mesh
+
+
+def rectangular_calc(waveguide_throat, rectangle_x, rectangle_y, depth_factor, angle_factor):
+    array_length = 100
+    # waveguide throat line
+    phi = np.linspace(0, np.pi / 2, array_length)
+    x_interior = waveguide_throat / 2 * np.cos(phi)
+    y_interior = waveguide_throat / 2 * np.sin(phi)
+
+    # theta is angle where x and y intersect
+    theta = np.arctan2(rectangle_y, rectangle_x)
+    # find array index which maps to corner of rectangle
+    corner_index = (array_length * (2 * theta / np.pi)).round().astype(int)
+    # construct rectangular coordinate manually
+    x_exterior = np.zeros_like(x_interior)
+    y_exterior = x_exterior.copy()
+    phi_aux = np.linspace(0, theta, corner_index)
+    x_exterior[:corner_index] = rectangle_x
+    y_exterior[:corner_index] = rectangle_x * np.tan(phi_aux)
+    phi_aux = np.linspace(np.pi / 2, theta, array_length - corner_index, endpoint=False)[::-1]
+    x_exterior[corner_index:] = rectangle_y / np.tan(phi_aux)
+    y_exterior[corner_index:] = rectangle_y
+
+    # interpolate between two curves
+    r = np.linspace(0, 1, array_length)[:, None]  # shape (array_length, 1) for broadcasting
+    x = x_exterior * r + x_interior * (1 - r)
+    y = y_exterior * r + y_interior * (1 - r)
+
+    # compute z profile
+    angle_factor = angle_factor / 10000
+    z = (rectangle_x / 2 * r / angle_factor) ** (1 / depth_factor)
+    # explicitly broadcast to the shape of x and y
+    z = np.broadcast_to(z, x.shape)
+
+    # prepare data for export
+    throat = np.array(np.column_stack((x[0, 0:array_length], y[0, 0:array_length],
+                                       z[0, 0:array_length])))
+    rectangle = np.array(np.column_stack((x[array_length - 1, 0:array_length], y[array_length - 1, 0:array_length],
+                                          z[array_length - 1, 0:array_length])))
+    horizontal_line = np.array(
+        np.column_stack((x[0:array_length, 0], y[0:array_length, 0], z[0:array_length, 0])))
+
+    vertical_line = np.array(np.column_stack((x[0:array_length, array_length - 1], y[0:array_length, array_length - 1],
+                                              z[0:array_length, array_length - 1])))
+    center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
+
+    hor_calc_coverage_angle = coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
+                                            horizontal_line[51, 0], horizontal_line[51, 2])
+
+    ver_calc_coverage_angle = coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
+                                            vertical_line[51, 1], vertical_line[51, 2])
+
+    rectangular_mesh = pv.StructuredGrid(x, y, z)
+
+    return throat, rectangle, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
+           ver_calc_coverage_angle, rectangular_mesh
 
 
 def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, save_text, phase_plug):
@@ -153,9 +207,16 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         height = float(self.lineEdit_height.text())  # (5)
         depth_factor = float(self.lineEdit_depth_factor.text())  # (6)
 
-        self.circle_array, self.ellipse_array, self.hor_array, self.ver_array, self.center_array, \
-        self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh \
-            = main_calc(throat_diameter, width, height, depth_factor, angle_factor)
+        if self.radioButton_elliptical.isChecked():
+            self.circle_array, self.ellipse_array, self.center_array, self.ver_array, self.hor_array, \
+            self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh \
+                = elliptical_calc(throat_diameter, width, height, depth_factor, angle_factor)
+
+        elif self.radioButton_rectangular.isChecked():
+            self.circle_array, self.ellipse_array, self.center_array, self.ver_array, self.hor_array,  \
+            self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh \
+                = rectangular_calc(throat_diameter, width, height, depth_factor, angle_factor)
+
         # max height of waveguide, passed to label
         z_max = round(np.max(self.ver_array[:, 2]), 2)
 
@@ -331,7 +392,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "throat " + str(self.lineEdit_throat_diameter.text()) + "[mm] Waveguide Throat " + "\n",
             "depth_factor " + str(self.lineEdit_depth_factor.text()) + " depth factor " + "\n",
             "angle_factor " + str(self.lineEdit_angle_factor.text()) + " angle factor " + "\n"
-            "plug_dia 0 [mm] phase plug diameter " + "\n",
+                                                                                          "plug_dia 0 [mm] phase plug diameter " + "\n",
             "dome_dia 0 [mm] tweeter dome diameter " + "\n",
             "plug_offset 0 [mm] phase plug offset " + "\n"
         ]

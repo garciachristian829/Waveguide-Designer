@@ -5,53 +5,62 @@ import pyvista as pv
 # diameter of the inner circle
 waveguide_throat = 30
 # axes of the outer ellipse
-ellipse_x = 250
-ellipse_y = 150
+ellipse_x = 180
+ellipse_y = 120
 # shape parameters for the z profile
-depth_factor = 4
+depth_factor = 2.5
 angle_factor = 40
 # number of grid points in radial and angular direction
 array_length = 100
 
-phase_plug = 0
-phase_plug_dia = 20
-plug_offset = 5
-dome_dia = 28
+# quarter circle interior line
+phi = np.linspace(0, np.pi/2, array_length)
+x_interior = waveguide_throat / 2 * np.cos(phi)
+y_interior = waveguide_throat / 2 * np.sin(phi)
 
-# now create the actual structured grid
-# 2d circular grid
-r, phi = np.mgrid[0:1:array_length*1j, 0:np.pi/2:array_length*1j]
-s, chi = np.mgrid[0:1:array_length * 1j, 0:np.pi / 2:array_length * 1j]
+# theta is angle where x and y intersect
+theta = np.arctan2(ellipse_y, ellipse_x)
+# find array index which maps to the corner of the rectangle
+corner_index = (array_length * (2*theta/np.pi)).round().astype(int)
+# construct rectangular coordinates manually
+x_exterior = np.zeros_like(x_interior)
+y_exterior = x_exterior.copy()
+phi_aux = np.linspace(0, theta, corner_index)
+x_exterior[:corner_index] = ellipse_x
+y_exterior[:corner_index] = ellipse_x * np.tan(phi_aux)
+phi_aux = np.linspace(np.pi/2, theta, array_length - corner_index, endpoint=False)[::-1]  # mind the reverse!
+x_exterior[corner_index:] = ellipse_y / np.tan(phi_aux)
+y_exterior[corner_index:] = ellipse_y
 
-# transform to ellipse on the outside, circle on the inside
-x = (ellipse_x/2 * r + waveguide_throat/2 * (1 - r))*np.cos(phi)
-y = (ellipse_y/2 * r + waveguide_throat/2 * (1 - r))*np.sin(phi)
-# dome dia if half dome
-x_phaseplug = ((phase_plug_dia / 2 * (1-s)) * np.cos(chi))
-y_phaseplug = ((phase_plug_dia / 2 * (1-s)) * np.sin(chi))
+# interpolate between two curves
+r = np.linspace(0, 1, array_length)[:, None]  # shape (array_length, 1) for broadcasting
+x = x_exterior * r + x_interior * (1 - r)
+y = y_exterior * r + y_interior * (1 - r)
+
+# debugging: plot interior and exterior
+exterior_points = np.array([
+    x_exterior,
+    y_exterior,
+    np.zeros_like(x_exterior),
+]).T
+interior_points = np.array([
+    x_interior,
+    y_interior,
+    np.zeros_like(x_interior),
+]).T
+plotter = pv.Plotter()
+plotter.add_mesh(pv.wrap(exterior_points))
+plotter.add_mesh(pv.wrap(interior_points))
+plotter.show()
+
 # compute z profile
 angle_factor = angle_factor / 10000
 z = (ellipse_x / 2 * r / angle_factor) ** (1 / depth_factor)
-
-alpha_angle = 2 * np.arcsin(phase_plug_dia / dome_dia)
-plug_modification = (phase_plug_dia / 2) / (np.tan(alpha_angle/2))
-
-
-z_phaseplug = np.sqrt(abs((dome_dia / 2)**2 - (x_phaseplug**2) - (y_phaseplug**2))) + plug_offset - plug_modification
-# print(y_phaseplug)
+# explicitly broadcast to the shape of x and y
+z = np.broadcast_to(z, x.shape)
 
 plotter = pv.Plotter()
-# waveguide_mesh = pv.StructuredGrid(x, y, z)
-# merged = waveguide_mesh.reflect((0,1,0))
-# waveguide_mesh = waveguide_mesh.merge(merged)
-# slice_y = waveguide_mesh.slice(normal='x', origin=(0.1,0,0))
-phase_plug = pv.StructuredGrid(x_phaseplug, y_phaseplug, z_phaseplug)
-# plotter.add_mesh(slice_y)
-# plotter.add_mesh(waveguide_mesh)
-# plotter.show_axes()
-# plotter.add_mesh_slice(waveguide_mesh, normal='x')
-# plotter.camera_position = 'xz'
-# plotter.view_xz()
-plotter.add_mesh(phase_plug)
-plotter.show()
 
+waveguide_mesh = pv.StructuredGrid(x, y, z)
+plotter.add_mesh(waveguide_mesh, style='wireframe')
+plotter.show()
