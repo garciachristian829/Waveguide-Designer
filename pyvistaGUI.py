@@ -464,7 +464,6 @@ class Ui_MainWindow(object):
         self.actionSave_Comsol_Parameters = QtWidgets.QAction(MainWindow)
         self.actionSave_Comsol_Parameters.setObjectName("actionSave_Comsol_Parameters")
         self.menuFile.addAction(self.actionSave_Waveguide_Parameters)
-        self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionLoad_Waveguide_Parameters)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionSave_Comsol_Parameters)

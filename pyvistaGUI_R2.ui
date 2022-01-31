@@ -1048,7 +1048,6 @@ Waveguide</string>
      <string>File</string>
     </property>
     <addaction name="actionSave_Waveguide_Parameters"/>
-    <addaction name="separator"/>
     <addaction name="actionLoad_Waveguide_Parameters"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Comsol_Parameters"/>

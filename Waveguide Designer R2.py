@@ -1,8 +1,10 @@
+import distutils.util
 import sys
 
 import numpy as np
 import pyvista as pv
 from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtWidgets import *
 # from <filename> of the UI python initialization (content not changed)
 from PyQt5.QtCore import pyqtSlot
 from pyvistaqt import QtInteractor
@@ -59,6 +61,8 @@ def elliptical_calc(waveguide_throat, ellipse_x, ellipse_y, depth_factor, angle_
 
 def rectangular_calc(waveguide_throat, rectangle_x, rectangle_y, depth_factor, angle_factor):
     array_length = 100
+    rectangle_x = rectangle_x / 2
+    rectangle_y = rectangle_y / 2
     # waveguide throat line
     phi = np.linspace(0, np.pi / 2, array_length)
     x_interior = waveguide_throat / 2 * np.cos(phi)
@@ -92,44 +96,42 @@ def rectangular_calc(waveguide_throat, rectangle_x, rectangle_y, depth_factor, a
     # prepare data for export
     throat = np.array(np.column_stack((x[0, 0:array_length], y[0, 0:array_length],
                                        z[0, 0:array_length])))
-    rectangle = np.array(np.column_stack((x[array_length - 1, 0:array_length], y[array_length - 1, 0:array_length],
-                                          z[array_length - 1, 0:array_length])))
+    x_rectangle = np.array(np.column_stack((x[array_length - 1, 0:corner_index],
+                                            y[array_length - 1, 0:corner_index],
+                                            z[array_length - 1, 0:corner_index])))
+
+    y_rectangle = np.array(np.column_stack((x[array_length - 1, corner_index - 1:array_length],
+                                            y[array_length - 1, corner_index - 1:array_length],
+                                            z[array_length - 1, corner_index - 1:array_length])))
+
     horizontal_line = np.array(
         np.column_stack((x[0:array_length, 0], y[0:array_length, 0], z[0:array_length, 0])))
 
     vertical_line = np.array(np.column_stack((x[0:array_length, array_length - 1], y[0:array_length, array_length - 1],
                                               z[0:array_length, array_length - 1])))
-    center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
+
+    center_line = np.array(np.column_stack((x[0:array_length, corner_index - 1], y[0:array_length, corner_index - 1],
+                                            z[0:array_length, corner_index - 1])))
+
+    y_mid_center_line = np.array(np.column_stack((x[0: array_length, int(corner_index / 2)],
+                                                  y[0: array_length, int(corner_index / 2)],
+                                                  z[0: array_length, int(corner_index / 2)])))
+
+    x_mid_center_line = np.array(np.column_stack((
+        x[0: array_length, int(array_length - corner_index)],
+        y[0: array_length, int(array_length - corner_index)],
+        z[0: array_length, int(array_length - corner_index)])))
 
     hor_calc_coverage_angle = coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
                                             horizontal_line[51, 0], horizontal_line[51, 2])
 
     ver_calc_coverage_angle = coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
                                             vertical_line[51, 1], vertical_line[51, 2])
-
+    # Create mesh for 3D viewing
     rectangular_mesh = pv.StructuredGrid(x, y, z)
 
-    return throat, rectangle, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
-           ver_calc_coverage_angle, rectangular_mesh
-
-
-def save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, save_text, phase_plug):
-    if phase_plug.size == 0:
-        np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
-        np.savetxt(save_text + "/Ellipse.txt", ellipse_array, delimiter=" ")
-        np.savetxt(save_text + "/Horizontal.txt", hor_array, delimiter=" ")
-        np.savetxt(save_text + "/Vertical.txt", ver_array, delimiter=" ")
-        np.savetxt(save_text + "/Center.txt", cen_array, delimiter=" ")
-
-    else:
-        np.savetxt(save_text + "/Throat.txt", circle_array, delimiter=" ")
-        np.savetxt(save_text + "/Ellipse.txt", ellipse_array, delimiter=" ")
-        np.savetxt(save_text + "/Horizontal.txt", hor_array, delimiter=" ")
-        np.savetxt(save_text + "/Vertical.txt", ver_array, delimiter=" ")
-        np.savetxt(save_text + "/Center.txt", cen_array, delimiter=" ")
-        np.savetxt(save_text + "/Phaseplug.txt", phase_plug, delimiter=" ")
-
-    return ()
+    return throat, x_rectangle, y_rectangle, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
+           ver_calc_coverage_angle, rectangular_mesh, x_mid_center_line, y_mid_center_line
 
 
 def cutoff_frequency(coverage_angle, throat_diameter):
@@ -167,6 +169,15 @@ def phase_plug_calc(plug_dia, dome_dia, plug_offset, array_length):
                                                z_phaseplug[0:array_length, 0])))
 
     return phaseplug, phaseplug_line
+
+
+def no_file_selected():
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Warning)
+    msg.setWindowIcon(QtGui.QIcon("D:/Python Projects/Waveguide Designer/Icon/Waveguide_Designer.ico"))
+    msg.setText("No File Was Selected!")
+    msg.setWindowTitle("Warning")
+    retval = msg.exec_()
 
 
 class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -213,8 +224,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 = elliptical_calc(throat_diameter, width, height, depth_factor, angle_factor)
 
         elif self.radioButton_rectangular.isChecked():
-            self.circle_array, self.ellipse_array, self.center_array, self.ver_array, self.hor_array,  \
-            self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh \
+            self.circle_array, self.x_rectangle, self.y_rectangle, self.center_array, self.ver_array, self.hor_array, \
+            self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh, self.x_midline, self.y_midline \
                 = rectangular_calc(throat_diameter, width, height, depth_factor, angle_factor)
 
         # max height of waveguide, passed to label
@@ -277,14 +288,28 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         save_text = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
 
-        circle_array = self.circle_array
-        ellipse_array = self.ellipse_array
-        hor_array = self.hor_array
-        ver_array = self.ver_array
-        cen_array = self.center_array
-        phase_plug = self.phaseplug_array
+        if save_text == '':
+            no_file_selected()
+        else:
 
-        save_text_data(circle_array, ellipse_array, hor_array, ver_array, cen_array, save_text, phase_plug)
+            np.savetxt(save_text + "/Throat.txt", self.circle_array, delimiter=" ")
+            np.savetxt(save_text + "/Horizontal.txt", self.hor_array, delimiter=" ")
+            np.savetxt(save_text + "/Vertical.txt", self.ver_array, delimiter=" ")
+            np.savetxt(save_text + "/Center.txt", self.center_array, delimiter=" ")
+
+            if self.radioButton_elliptical.isChecked():
+                np.savetxt(save_text + "/Ellipse.txt", self.ellipse_array, delimiter=" ")
+                if self.checkBox_phaseplug.isChecked():
+                    np.savetxt(save_text + "/Phaseplug.txt", self.phaseplug_array, delimiter=" ")
+
+            elif self.radioButton_rectangular.isChecked():
+                np.savetxt(save_text + "/X_Rectangle.txt", self.x_rectangle, delimiter=" ")
+                np.savetxt(save_text + "/Y_Rectangle.txt", self.y_rectangle, delimiter=" ")
+                np.savetxt(save_text + "/X_mid_Rectangle.txt", self.x_midline, delimiter=" ")
+                np.savetxt(save_text + "/Y_mid_Rectangle.txt", self.y_midline, delimiter=" ")
+
+                if self.checkBox_phaseplug.isChecked():
+                    np.savetxt(save_text + "/Phaseplug.txt", self.phaseplug_array, delimiter=" ")
 
     def check_state(self, state):
         # This function will check the state of the phaseplug_checkbox and if it is checked it will enable it and accept
@@ -309,14 +334,13 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.plotter.clear()
                     self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
                     self.plotter.add_mesh(self.phaseplug_slice_x, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_yz()
 
                 elif self.sender() == self.hor_checkbox:
                     self.ver_checkbox.setChecked(False)
                     self.plotter.clear()
                     self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
                     self.plotter.add_mesh(self.phaseplug_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_xz()
+
             elif state != QtCore.Qt.Checked:
                 self.plotter.clear()
                 self.plotter.add_mesh(self.phaseplug_whole, show_scalar_bar=False)
@@ -343,69 +367,91 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def parameters_save(self):
         file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", '/', "WGP (*.wgp)")[0]
 
-        parameter_list = [str(self.lineEdit_throat_diameter.text()) + "\n",
-                          str(self.lineEdit_width.text()) + "\n",
-                          str(self.lineEdit_height.text()) + "\n",
-                          str(self.lineEdit_angle_factor.text()) + "\n",
-                          str(self.lineEdit_depth_factor.text()) + "\n",
-                          str(self.checkBox_phaseplug.isChecked()) + "\n"
-                          ]
+        if file_name == '':
+            no_file_selected()
 
-        if self.checkBox_phaseplug.isChecked():
-            parameter_phaseplug = [
-                str(self.lineEdit_plug_diameter.text()) + "\n",
-                str(self.lineEdit_dome_diameter.text()) + "\n",
-                str(self.lineEdit_plugoffset.text())
-            ]
-            parameter_list.extend(parameter_phaseplug)
+        else:
 
-        file_parameters = open(file_name, "w")
-        file_parameters.writelines(parameter_list)
+            parameter_list = [str(self.lineEdit_throat_diameter.text()) + "\n",
+                              str(self.lineEdit_width.text()) + "\n",
+                              str(self.lineEdit_height.text()) + "\n",
+                              str(self.lineEdit_angle_factor.text()) + "\n",
+                              str(self.lineEdit_depth_factor.text()) + "\n",
+                              str(self.checkBox_phaseplug.isChecked()) + "\n",
+                              str(self.radioButton_elliptical.isChecked()) + "\n",
+                              str(self.radioButton_rectangular.isChecked()) + "\n"
+                              ]
+
+            if self.checkBox_phaseplug.isChecked():
+                parameter_phaseplug = [
+                    str(self.lineEdit_plug_diameter.text()) + "\n",
+                    str(self.lineEdit_dome_diameter.text()) + "\n",
+                    str(self.lineEdit_plugoffset.text())
+                ]
+                parameter_list.extend(parameter_phaseplug)
+
+            file_parameters = open(file_name, "w")
+            file_parameters.writelines(parameter_list)
 
     def parameters_load(self):
         parameter_file = QtWidgets.QFileDialog.getOpenFileName(self, "Select Waveguide Parameter File",
                                                                "", 'WGP (*.wgp)')[0]
+        if parameter_file == '':
+            no_file_selected()
 
-        parameters = open(parameter_file, "r")
+        else:
 
-        content = parameters.read().splitlines()
+            parameters = open(parameter_file, "r")
 
-        self.lineEdit_throat_diameter.setText(content[0])
-        self.lineEdit_width.setText(content[1])
-        self.lineEdit_height.setText(content[2])
-        self.lineEdit_angle_factor.setText(content[3])
-        self.lineEdit_depth_factor.setText(content[4])
-        self.checkBox_phaseplug.setChecked(False)
+            content = parameters.read().splitlines()
 
-        if len(content) == 9:
-            self.checkBox_phaseplug.setChecked(True)
-            self.lineEdit_plug_diameter.setText(content[6])
-            self.lineEdit_dome_diameter.setText(content[7])
-            self.lineEdit_plugoffset.setText(content[8])
+            self.lineEdit_throat_diameter.setText(content[0])
+            self.lineEdit_width.setText(content[1])
+            self.lineEdit_height.setText(content[2])
+            self.lineEdit_angle_factor.setText(content[3])
+            self.lineEdit_depth_factor.setText(content[4])
+            self.checkBox_phaseplug.setChecked(bool(distutils.util.strtobool(content[5])))
+            self.radioButton_elliptical.setChecked(bool(distutils.util.strtobool(content[6])))
+            self.radioButton_rectangular.setChecked(bool(distutils.util.strtobool(content[7])))
+
+            if bool(distutils.util.strtobool(content[5])):
+                self.lineEdit_plug_diameter.setText(content[8])
+                self.lineEdit_dome_diameter.setText(content[9])
+                self.lineEdit_plugoffset.setText(content[10])
+
+            self.pushButton_generate_waveguide.click()
 
     def comsol_parameters(self):
         file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Comsol Parameters", '/', "txt (*.txt)")[0]
 
-        comsol_params = [
-            "x_ellipse " + str(self.lineEdit_width.text()) + "[mm] Ellipse X " + "\n",
-            "y_ellipse " + str(self.lineEdit_height.text()) + "[mm] Ellipse Y " + "\n",
-            "throat " + str(self.lineEdit_throat_diameter.text()) + "[mm] Waveguide Throat " + "\n",
-            "depth_factor " + str(self.lineEdit_depth_factor.text()) + " depth factor " + "\n",
-            "angle_factor " + str(self.lineEdit_angle_factor.text()) + " angle factor " + "\n"
-                                                                                          "plug_dia 0 [mm] phase plug diameter " + "\n",
-            "dome_dia 0 [mm] tweeter dome diameter " + "\n",
-            "plug_offset 0 [mm] phase plug offset " + "\n"
-        ]
-        if self.checkBox_phaseplug.isChecked():
-            comsol_phaseplug = [
-                "plug_dia " + str(self.lineEdit_plug_diameter.text()) + "[mm] phase plug diameter " + "\n",
-                "dome_dia " + str(self.lineEdit_dome_diameter.text()) + "[mm] tweeter dome diameter " + "\n",
-                "plug_offset " + str(self.lineEdit_plugoffset.text()) + "[mm] phase plug offset " + "\n"
-            ]
-            comsol_params.extend(comsol_phaseplug)
+        if file_name == '':
+            no_file_selected()
 
-        file_parameters = open(file_name, "w")
-        file_parameters.writelines(comsol_params)
+        else:
+            comsol_params = [
+                "x_ellipse " + str(self.lineEdit_width.text()) + "[mm] Ellipse X " + "\n",
+                "y_ellipse " + str(self.lineEdit_height.text()) + "[mm] Ellipse Y " + "\n",
+                "throat " + str(self.lineEdit_throat_diameter.text()) + "[mm] Waveguide Throat " + "\n",
+                "depth_factor " + str(self.lineEdit_depth_factor.text()) + " depth factor " + "\n",
+                "angle_factor " + str(self.lineEdit_angle_factor.text()) + " angle factor " + "\n"
+            ]
+            if self.checkBox_phaseplug.isChecked():
+                comsol_phaseplug = [
+                    "plug_dia " + str(self.lineEdit_plug_diameter.text()) + "[mm] phase plug diameter " + "\n",
+                    "dome_dia " + str(self.lineEdit_dome_diameter.text()) + "[mm] tweeter dome diameter " + "\n",
+                    "plug_offset " + str(self.lineEdit_plugoffset.text()) + "[mm] phase plug offset " + "\n"
+                ]
+                comsol_params.extend(comsol_phaseplug)
+            else:
+                comsol_phaseplug = [
+                    "plug_dia 0 [mm] phase plug diameter " + "\n",
+                    "dome_dia 0 [mm] tweeter dome diameter " + "\n",
+                    "plug_offset 0 [mm] phase plug offset " + "\n"
+                ]
+                comsol_params.extend(comsol_phaseplug)
+
+            file_parameters = open(file_name, "w")
+            file_parameters.writelines(comsol_params)
 
 
 if __name__ == "__main__":

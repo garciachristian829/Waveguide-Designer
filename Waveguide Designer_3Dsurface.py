@@ -5,13 +5,16 @@ import pyvista as pv
 # diameter of the inner circle
 waveguide_throat = 30
 # axes of the outer ellipse
-ellipse_x = 180
-ellipse_y = 120
+ellipse_x = 290
+ellipse_y = 180
 # shape parameters for the z profile
 depth_factor = 2.5
 angle_factor = 40
 # number of grid points in radial and angular direction
 array_length = 100
+
+ellipse_x = ellipse_x /2
+ellipse_y = ellipse_y /2
 
 # quarter circle interior line
 phi = np.linspace(0, np.pi/2, array_length)
@@ -64,3 +67,5 @@ plotter = pv.Plotter()
 waveguide_mesh = pv.StructuredGrid(x, y, z)
 plotter.add_mesh(waveguide_mesh, style='wireframe')
 plotter.show()
+test_mesh = waveguide_mesh.extract_surface()
+test_mesh.save('test_mesh.stl')
