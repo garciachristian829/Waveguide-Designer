@@ -442,10 +442,12 @@ class Ui_MainWindow(object):
         spacerItem3 = QtWidgets.QSpacerItem(20, 88, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout_7.addItem(spacerItem3, 2, 1, 1, 1)
         self.formLayout.setLayout(0, QtWidgets.QFormLayout.LabelRole, self.gridLayout_7)
+        spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.formLayout.setItem(0, QtWidgets.QFormLayout.FieldRole, spacerItem4)
         self.tabWidget.addTab(self.tab_2, "")
         self.verticalLayout.addWidget(self.tabWidget)
-        spacerItem4 = QtWidgets.QSpacerItem(689, 13, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.verticalLayout.addItem(spacerItem4)
+        spacerItem5 = QtWidgets.QSpacerItem(689, 13, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.verticalLayout.addItem(spacerItem5)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 710, 21))
@@ -470,7 +472,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.lineEdit_throat_diameter, self.lineEdit_width)
         MainWindow.setTabOrder(self.lineEdit_width, self.lineEdit_height)
@@ -523,13 +525,3 @@ class Ui_MainWindow(object):
         self.actionSave_Waveguide_Parameters.setText(_translate("MainWindow", "Save Waveguide Parameters"))
         self.actionLoad_Waveguide_Parameters.setText(_translate("MainWindow", "Load Waveguide Parameters"))
         self.actionSave_Comsol_Parameters.setText(_translate("MainWindow", "Save Comsol Parameters"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
