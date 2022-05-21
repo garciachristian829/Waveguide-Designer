@@ -3,6 +3,7 @@ import sys
 
 import PyQt5.QtWidgets
 import numpy as np
+import pyvista
 import pyvista as pv
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import *
@@ -37,6 +38,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionSave_Waveguide_Parameters.triggered.connect(self.parameters_save)
         self.actionLoad_Waveguide_Parameters.triggered.connect(self.parameters_load)
         self.actionSave_Comsol_Parameters.triggered.connect(self.comsol_parameters)
+        self.actionExport_OBJ.triggered.connect(self.export_obj)
 
         self.lineEdit_throat_diameter.setValidator(
             QtGui.QDoubleValidator(notation=QtGui.QDoubleValidator.StandardNotation))
@@ -73,7 +75,7 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif self.radioButton_rectangular.isChecked():
             self.circle_array, self.x_rectangle, self.y_rectangle, self.center_array, self.ver_array, self.hor_array, \
             self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh, self.x_midline, self.y_midline \
-             = self.rectangular_calc(throat_diameter, width, height, depth_factor, angle_factor)
+                = self.rectangular_calc(throat_diameter, width, height, depth_factor, angle_factor)
 
         # Calculate cutoff freq during function calc
         cutoff_freq = self.cutoff_frequency(self.hor_coverage_angle, throat_diameter)
@@ -87,6 +89,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.lineEdit_ver_coverage_angle.setText((ver_coverage_angle + ' deg'))
         self.lineEdit_cutoff_freq.setText((cutoff_freq + ' Hz'))
 
+        self.plotter.add_text("The height is: {} mm".format(z_max), position='upper_left', color='Black',
+                              font_size=8)
 
         # Reflect mesh twice and merge twice to create a entire surface
         waveguide_mesh_reflected = waveguide_mesh.reflect((0, 1, 0))
@@ -425,7 +429,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Create mesh for 3D viewing
         rectangular_mesh = pv.StructuredGrid(x, y, z)
 
-
         return throat, x_rectangle, y_rectangle, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
                ver_calc_coverage_angle, rectangular_mesh, x_mid_center_line, y_mid_center_line
 
@@ -480,7 +483,19 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         msg.setWindowIcon(QtGui.QIcon("Waveguide_Designer.ico"))
         msg.setText("Plug diameter cannot be larger then dome diameter!")
         msg.setWindowTitle("Error")
-        retval = msg.exec_()
+        msg.exec_()
+
+    def export_obj(self):
+
+        stl_filename = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", '/', "STL (*.stl)")[0]
+
+        if stl_filename == '':
+            self.no_file_selected()
+
+        else:
+
+            mesh = self.waveguide_whole.triangulate(inplace=True)
+            pyvista.save_meshio(stl_filename, mesh)
 
 
 if __name__ == "__main__":

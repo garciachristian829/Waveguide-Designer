@@ -511,7 +511,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -1064,6 +1064,7 @@ Waveguide</string>
     <addaction name="actionLoad_Waveguide_Parameters"/>
     <addaction name="separator"/>
     <addaction name="actionSave_Comsol_Parameters"/>
+    <addaction name="actionExport_OBJ"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -1090,6 +1091,11 @@ Waveguide</string>
   <action name="actionSave_Comsol_Parameters">
    <property name="text">
     <string>Save Comsol Parameters</string>
+   </property>
+  </action>
+  <action name="actionExport_OBJ">
+   <property name="text">
+    <string>Export OBJ</string>
    </property>
   </action>
  </widget>
