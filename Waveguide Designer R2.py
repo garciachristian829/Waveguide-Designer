@@ -11,7 +11,27 @@ from PyQt5.QtWidgets import *
 from pyvistaqt import QtInteractor
 from qtpy import QtWidgets
 
+from pyqtgraph import PlotWidget, plot
+import pyqtgraph as pg
 from pyvistaGUI import Ui_MainWindow
+
+
+class CrossSectionWindow(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        CrossSectionWindow.setWindowTitle("Waveguide Cross-Section")
+        self.setFixedWidth(800)
+        self.setFixedHeight(600)
+        self.horizontalGraph = pg.PlotWidget()
+
+        self.horizontalGraph.setBackground('w')
+        self.horizontalGraph.showGrid(x=True, y=True)
+
+
+
+
+
 
 
 class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -31,8 +51,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_save_button.clicked.connect(self.on_click2)
         self.checkBox_phaseplug.stateChanged.connect(self.check_state)
 
-        self.ver_checkbox.stateChanged.connect(self.check_cross_checkbox)
-        self.hor_checkbox.stateChanged.connect(self.check_cross_checkbox)
         self.setWindowIcon(QtGui.QIcon('Waveguide_Designer.ico'))
 
         self.actionSave_Waveguide_Parameters.triggered.connect(self.parameters_save)
@@ -103,8 +121,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Define mesh to be used with cross-section checkboxes and define waveguide slice variables
         self.waveguide_whole = waveguide_mesh
-        self.waveguide_slice_x = waveguide_mesh.slice(normal='x', origin=(0.1, 0, 0))
-        self.waveguide_slice_y = waveguide_mesh.slice(normal='y')
+        # self.waveguide_slice_x = waveguide_mesh.slice(normal='x', origin=(0.1, 0, 0))
+        # self.waveguide_slice_y = waveguide_mesh.slice(normal='y')
 
         if not (self.checkBox_phaseplug.isChecked()):
             # If phaseplug checkbox is not checked, pass an empty array to avoid any issues
@@ -135,8 +153,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 phaseplug_mesh['Data'] = phaseplug_mesh.points[:, 2]
                 # Define global variable to hold phaseplug mesh and define xy phaseplug slices
                 self.phaseplug_whole = phaseplug_mesh
-                self.phaseplug_slice_x = phaseplug_mesh.slice(normal='x', origin=(0.1, 0, 0))
-                self.phaseplug_slice_y = phaseplug_mesh.slice(normal='y')
+                # self.phaseplug_slice_x = phaseplug_mesh.slice(normal='x', origin=(0.1, 0, 0))
+                # self.phaseplug_slice_y = phaseplug_mesh.slice(normal='y')
 
                 self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
                 self.plotter.add_mesh(phaseplug_mesh, show_scalar_bar=False)
@@ -180,47 +198,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.groupBox_phaseplug.setEnabled(True)
 
-    def check_cross_checkbox(self, state):
-        # Vertical and Horizontal checkboxes are checked via if/elif loop. If checked, if loop is run, else runs not
-        # checked loop. If both checkboxes are unchecked, replot the waveguide.
-
-        if self.checkBox_phaseplug.isChecked():
-
-            if state == QtCore.Qt.Checked:
-
-                if self.sender() == self.ver_checkbox:
-                    self.hor_checkbox.setChecked(False)
-                    self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
-                    self.plotter.add_mesh(self.phaseplug_slice_x, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_yz()
-
-                elif self.sender() == self.hor_checkbox:
-                    self.ver_checkbox.setChecked(False)
-                    self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.add_mesh(self.phaseplug_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_xz()
-
-            elif state != QtCore.Qt.Checked:
-                self.pushButton_generate_waveguide.click()
-
-        else:
-            if state == QtCore.Qt.Checked:
-
-                if self.sender() == self.ver_checkbox:
-                    self.hor_checkbox.setChecked(False)
-                    self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_x, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_yz()
-
-                elif self.sender() == self.hor_checkbox:
-                    self.ver_checkbox.setChecked(False)
-                    self.plotter.clear()
-                    self.plotter.add_mesh(self.waveguide_slice_y, show_scalar_bar=False, line_width=2)
-                    self.plotter.view_xz()
-            elif state != QtCore.Qt.Checked:
-                self.pushButton_generate_waveguide.click()
 
     def parameters_save(self):
         file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", '/', "WGP (*.wgp)")[0]
