@@ -1,7 +1,7 @@
 import distutils.util
 import sys
 
-import PyQt5.QtWidgets
+# import PyQt5.QtWidgets
 import numpy as np
 import pyvista
 import pyvista as pv
@@ -11,27 +11,82 @@ from PyQt5.QtWidgets import *
 from pyvistaqt import QtInteractor
 from qtpy import QtWidgets
 
-from pyqtgraph import PlotWidget, plot
+# from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
 from pyvistaGUI import Ui_MainWindow
+from cross_section_ui import Ui_Dialog
 
 
-class CrossSectionWindow(QDialog):
+class CrossSectionWindow(QDialog, Ui_Dialog):
 
-    def __init__(self):
+    def __init__(self, ver_cross_array, hor_cross_array, wg_height, phaseplug_array=None):
         super().__init__()
-        CrossSectionWindow.setWindowTitle("Waveguide Cross-Section")
-        self.setFixedWidth(800)
-        self.setFixedHeight(600)
-        self.horizontalGraph = pg.PlotWidget()
+        if phaseplug_array is None:
+            phaseplug_array = []
 
-        self.horizontalGraph.setBackground('w')
-        self.horizontalGraph.showGrid(x=True, y=True)
+        self.setupUi(self)
+        self.setWindowIcon(QtGui.QIcon('Waveguide_Designer.ico'))
+        self.setWindowTitle("Waveguide Cross Section")
+        self.horGraph = pg.PlotWidget()
+        self.verGraph = pg.PlotWidget()
 
+        self.horGraph.clear()
+        self.verGraph.clear()
 
+        styles_label = {'color': 'k', 'font-size': '13px'}
 
+        self.horGraph.setTitle("Horizontal Cross-Section", size="25pt")
+        self.horGraph.setLabel('bottom', 'Width (mm)', **styles_label)
+        self.verGraph.setTitle("Vertical Cross-Section", size="25pt", )
+        self.verGraph.setLabel('bottom', 'Width (mm)', **styles_label)
 
+        self.gridLayout_2.addWidget(self.horGraph)
+        self.gridLayout_2.addWidget(self.verGraph)
 
+        pen = pg.mkPen(color=(255, 0, 0), width=6, style=QtCore.Qt.SolidLine)
+
+        self.horGraph.setBackground('w')
+        self.horGraph.showGrid(x=True, y=True)
+        self.horGraph.hideButtons()
+        self.horGraph.setMouseEnabled(x=False, y=False)
+        self.horGraph.setMenuEnabled(False)
+
+        self.verGraph.setBackground('w')
+        self.verGraph.showGrid(x=True, y=True)
+        self.verGraph.hideButtons()
+        self.verGraph.setMouseEnabled(x=False, y=False)
+        self.verGraph.setMenuEnabled(False)
+
+        xmax_hor = np.max(hor_cross_array, axis=0)
+        ymax_ver = np.max(ver_cross_array, axis=0)
+
+        # Used to check which x value is larger and match the X axis for both plots
+        if xmax_hor[0] >= ymax_ver[1]:
+            self.horGraph.setXRange(xmax_hor[0] * -1, xmax_hor[0], padding=0)
+            self.verGraph.setXRange(xmax_hor[0] * -1, xmax_hor[0], padding=0)
+        else:
+            self.horGraph.setXRange(ymax_ver[1] * -1, ymax_ver[1], padding=0)
+            self.verGraph.setXRange(ymax_ver[1] * -1, ymax_ver[1], padding=0)
+
+        self.verGraph.plot(ver_cross_array[:, 1], ver_cross_array[:, 2], pen=pen)
+        self.verGraph.plot((ver_cross_array[:, 1] * -1), ver_cross_array[:, 2], pen=pen)
+        self.horGraph.plot(hor_cross_array[:, 0], hor_cross_array[:, 2], pen=pen)
+        self.horGraph.plot((hor_cross_array[:, 0] * -1), hor_cross_array[:, 2], pen=pen)
+
+        height_text = pg.TextItem(text='Height: {} mm'.format(wg_height), anchor=(2, 1), color=(0, 0, 0))
+        self.verGraph.addItem(height_text)
+        if len(phaseplug_array) == 0:
+            pass
+
+        else:
+            self.verGraph.plot(phaseplug_array[:, 0], phaseplug_array[:, 2], pen=pen)
+            self.verGraph.plot(phaseplug_array[:, 0] * -1, phaseplug_array[:, 2], pen=pen)
+            self.horGraph.plot(phaseplug_array[:, 0], phaseplug_array[:, 2], pen=pen)
+            self.horGraph.plot(phaseplug_array[:, 0] * -1, phaseplug_array[:, 2], pen=pen)
+
+    def closeEvent(self, QCloseEvent):
+        super().closeEvent(QCloseEvent)
+        self.close()
 
 
 class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -44,20 +99,20 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.plotter.show_axes()
         self.gridLayout_5.addWidget(self.plotter.interactor)
 
+        self.setWindowIcon(QtGui.QIcon('Waveguide_Designer.ico'))
+
         # Set checkbox to not checked
         self.groupBox_phaseplug.setEnabled(False)
         # Define buttons and checkbox state check
         self.pushButton_generate_waveguide.clicked.connect(self.generate_waveguide)
         self.pushButton_save_button.clicked.connect(self.on_click2)
         self.checkBox_phaseplug.stateChanged.connect(self.check_state)
-
-        self.setWindowIcon(QtGui.QIcon('Waveguide_Designer.ico'))
-
         self.actionSave_Waveguide_Parameters.triggered.connect(self.parameters_save)
         self.actionLoad_Waveguide_Parameters.triggered.connect(self.parameters_load)
         self.actionSave_Comsol_Parameters.triggered.connect(self.comsol_parameters)
         self.actionExport_OBJ.triggered.connect(self.export_obj)
 
+        # Set type of number that can be accepted in all input boxes (Double)
         self.lineEdit_throat_diameter.setValidator(
             QtGui.QDoubleValidator(notation=QtGui.QDoubleValidator.StandardNotation))
         self.lineEdit_width.setValidator(QtGui.QDoubleValidator(notation=QtGui.QDoubleValidator.StandardNotation))
@@ -80,35 +135,55 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Get Parameters from LineEdits in Waveguide Groupbox
         throat_diameter = float(self.lineEdit_throat_diameter.text())  # (1)
-        angle_factor = float(self.lineEdit_angle_factor.text())  # (3)
-        width = float(self.lineEdit_width.text())  # (4)
-        height = float(self.lineEdit_height.text())  # (5)
-        depth_factor = float(self.lineEdit_depth_factor.text())  # (6)
+        angle_factor = float(self.lineEdit_angle_factor.text())  # (2)
+        width = float(self.lineEdit_width.text())  # (3)
+        height = float(self.lineEdit_height.text())  # (4)
+        depth_factor = float(self.lineEdit_depth_factor.text())  # (5)
 
         if self.radioButton_elliptical.isChecked():
             self.circle_array, self.ellipse_array, self.center_array, self.ver_array, self.hor_array, \
-            self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh \
+            waveguide_mesh \
                 = self.elliptical_calc(throat_diameter, width, height, depth_factor, angle_factor)
 
         elif self.radioButton_rectangular.isChecked():
             self.circle_array, self.x_rectangle, self.y_rectangle, self.center_array, self.ver_array, self.hor_array, \
-            self.hor_coverage_angle, self.ver_coverage_angle, waveguide_mesh, self.x_midline, self.y_midline \
+            waveguide_mesh, self.x_midline, self.y_midline \
                 = self.rectangular_calc(throat_diameter, width, height, depth_factor, angle_factor)
 
+        # Calculate zmax of waveguide
+        z_max = round(np.max(self.ver_array[:, 2]), 2)
+
+        # calculate coverage angles using averages of 1/3 -> 2/3 method
+        first_section = round(z_max / 3)
+        second_section = first_section * 2
+        nearthroat_value = self.find_nearest(self.ver_array[:, 2], first_section)
+        nearmouth_value = self.find_nearest(self.ver_array[:, 2], second_section)
+        nearthroat_index = np.where(self.ver_array == nearthroat_value)[0][0]
+        nearmouth_index = np.where(self.ver_array == nearmouth_value)[0][0]
+
+        ver_coverage_angle_list = []
+        hor_coverage_angle_list = []
+        for i in range(nearthroat_index, nearmouth_index + 1):
+            ver_coverage_angle_list.append(self.coverage_calc(self.ver_array[i, 1], self.ver_array[i, 2],
+                                                              self.ver_array[i + 2, 1], self.ver_array[i + 2, 2]))
+
+            hor_coverage_angle_list.append(self.coverage_calc(self.hor_array[i, 0], self.hor_array[i, 2],
+                                                              self.hor_array[i + 2, 0], self.hor_array[i + 2, 2]))
+
+        hor_calc_coverage_angle = sum(hor_coverage_angle_list) / len(hor_coverage_angle_list)
+        ver_calc_coverage_angle = sum(ver_coverage_angle_list) / len(ver_coverage_angle_list)
+
+        # Set all values in array less than 1 to 0
+        self.hor_array[self.hor_array < 1] = 0
+        self.ver_array[self.ver_array < 1] = 0
+
         # Calculate cutoff freq during function calc
-        cutoff_freq = self.cutoff_frequency(self.hor_coverage_angle, throat_diameter)
+        cutoff_freq = self.cutoff_frequency(hor_calc_coverage_angle, throat_diameter)
 
         # Variables that will be used to output on results tab
-        z_max = str(round(np.max(self.ver_array[:, 2]), 2))
-        hor_coverage_angle = str(int(self.hor_coverage_angle))
-        ver_coverage_angle = str(int(self.ver_coverage_angle))
-        cutoff_freq = str(int(cutoff_freq))
-        self.lineEdit_coverage_angle.setText((hor_coverage_angle + ' deg'))
-        self.lineEdit_ver_coverage_angle.setText((ver_coverage_angle + ' deg'))
-        self.lineEdit_cutoff_freq.setText((cutoff_freq + ' Hz'))
-
-        self.plotter.add_text("The height is: {} mm".format(z_max), position='upper_left', color='Black',
-                              font_size=8)
+        self.lineEdit_coverage_angle.setText((str(int(hor_calc_coverage_angle)) + ' deg'))
+        self.lineEdit_ver_coverage_angle.setText((str(int(ver_calc_coverage_angle)) + ' deg'))
+        self.lineEdit_cutoff_freq.setText((str(int(cutoff_freq)) + ' Hz'))
 
         # Reflect mesh twice and merge twice to create a entire surface
         waveguide_mesh_reflected = waveguide_mesh.reflect((0, 1, 0))
@@ -119,16 +194,14 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Select scalars to plot "cmap" colors without needing matplotlib
         waveguide_mesh['Data'] = waveguide_mesh.points[:, 2]
 
-        # Define mesh to be used with cross-section checkboxes and define waveguide slice variables
-        self.waveguide_whole = waveguide_mesh
-        # self.waveguide_slice_x = waveguide_mesh.slice(normal='x', origin=(0.1, 0, 0))
-        # self.waveguide_slice_y = waveguide_mesh.slice(normal='y')
-
         if not (self.checkBox_phaseplug.isChecked()):
             # If phaseplug checkbox is not checked, pass an empty array to avoid any issues
             self.phaseplug_array = np.array([])
 
             self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
+
+            self.dlg = CrossSectionWindow(self.ver_array, self.hor_array, z_max)
+            self.dlg.show()
 
         else:
             # If checkbox is checked, gather data from PhasePlug Groupbox
@@ -151,13 +224,17 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 phaseplug_mesh = merged_mesh.merge(merged_mirror)
 
                 phaseplug_mesh['Data'] = phaseplug_mesh.points[:, 2]
-                # Define global variable to hold phaseplug mesh and define xy phaseplug slices
-                self.phaseplug_whole = phaseplug_mesh
-                # self.phaseplug_slice_x = phaseplug_mesh.slice(normal='x', origin=(0.1, 0, 0))
-                # self.phaseplug_slice_y = phaseplug_mesh.slice(normal='y')
 
                 self.plotter.add_mesh(waveguide_mesh, show_scalar_bar=False)
                 self.plotter.add_mesh(phaseplug_mesh, show_scalar_bar=False)
+
+                self.dlg = CrossSectionWindow(self.ver_array, self.hor_array, z_max, self.phaseplug_array)
+                self.dlg.show()
+
+    def find_nearest(self, array, value):
+        array = np.asarray(array)
+        idx = (np.abs(array - value)).argmin()
+        return array[idx]
 
     def on_click2(self):
         # Button to save text to folder. Folder is specified by user.
@@ -197,7 +274,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.lineEdit_plugoffset.clear()
         else:
             self.groupBox_phaseplug.setEnabled(True)
-
 
     def parameters_save(self):
         file_name = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", '/', "WGP (*.wgp)")[0]
@@ -323,15 +399,9 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                              z[0:array_length, array_length - 1])))
         center_line = np.array(np.column_stack((x[0:array_length, 50], y[0:array_length, 50], z[0:array_length, 50])))
 
-        hor_calc_coverage_angle = self.coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
-                                                     horizontal_line[51, 0], horizontal_line[51, 2])
-
-        ver_calc_coverage_angle = self.coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
-                                                     vertical_line[51, 1], vertical_line[51, 2])
         elliptical_mesh = pv.StructuredGrid(x, y, z)
 
-        return throat, ellipse, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
-               ver_calc_coverage_angle, elliptical_mesh
+        return throat, ellipse, center_line, vertical_line, horizontal_line, elliptical_mesh
 
     def rectangular_calc(self, waveguide_throat, rectangle_x, rectangle_y, depth_factor, angle_factor):
         array_length = 100
@@ -398,16 +468,11 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             y[0: array_length, int(array_length - corner_index)],
             z[0: array_length, int(array_length - corner_index)])))
 
-        hor_calc_coverage_angle = self.coverage_calc(horizontal_line[49, 0], horizontal_line[49, 2],
-                                                     horizontal_line[51, 0], horizontal_line[51, 2])
-
-        ver_calc_coverage_angle = self.coverage_calc(vertical_line[49, 1], vertical_line[49, 2],
-                                                     vertical_line[51, 1], vertical_line[51, 2])
         # Create mesh for 3D viewing
         rectangular_mesh = pv.StructuredGrid(x, y, z)
 
-        return throat, x_rectangle, y_rectangle, center_line, vertical_line, horizontal_line, hor_calc_coverage_angle, \
-               ver_calc_coverage_angle, rectangular_mesh, x_mid_center_line, y_mid_center_line
+        return throat, x_rectangle, y_rectangle, center_line, vertical_line, horizontal_line, rectangular_mesh, \
+               x_mid_center_line, y_mid_center_line
 
     def cutoff_frequency(self, coverage_angle, throat_diameter):
         coverage_angle = 0.5 * (coverage_angle * (np.pi / 180))
@@ -415,8 +480,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         throat_radius = (throat_diameter / 2)
 
         cutoff_freq = (44 * (np.sin(coverage_angle) / (throat_radius / 1000)))
-
-        # cutoff_freq = speed_sound / (np.sqrt(np.pi * mouth_surface_area) * 2)
 
         return cutoff_freq
 
@@ -473,6 +536,14 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             mesh = self.waveguide_whole.triangulate(inplace=True)
             pyvista.save_meshio(stl_filename, mesh)
+
+    def closeEvent(self, QCloseEvent):
+        super().closeEvent(QCloseEvent)
+        self.plotter.close()
+        try:
+            self.dlg.close()
+        except AttributeError as a:
+            pass
 
 
 if __name__ == "__main__":
