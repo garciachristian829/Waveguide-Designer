@@ -20,7 +20,7 @@ a = Analysis(['Waveguide Designer R2.py'],
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
-a.datas += [('Waveguide_Designer.ico', 'D:\\Waveguide Designer\\Icon\\Waveguide_Designer.ico', 'DATA')]
+a.datas += [('Waveguide_Designer.ico', 'D:\\Python Projects\\Waveguide-Designer\\Icon\\Waveguide_Designer.ico', 'DATA')]
 
 exe = EXE(pyz,
           a.scripts, 

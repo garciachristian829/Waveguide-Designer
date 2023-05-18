@@ -18,9 +18,9 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=D:\Python Projects\Waveguide Designer\Installer
+OutputDir=D:\Python Projects\Waveguide-Designer\Installer
 OutputBaseFilename=WaveguideDesigner
-SetupIconFile=D:\Python Projects\Waveguide Designer\Waveguide_Designer.ico
+SetupIconFile=D:\Python Projects\Waveguide-Designer\Waveguide_Designer.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -32,8 +32,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\Python Projects\Waveguide Designer\dist\Waveguide Designer\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Python Projects\Waveguide Designer\dist\Waveguide Designer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\Python Projects\Waveguide-Designer\dist\Waveguide Designer\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\Python Projects\Waveguide-Designer\dist\Waveguide Designer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

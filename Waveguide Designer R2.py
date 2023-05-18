@@ -194,6 +194,8 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Select scalars to plot "cmap" colors without needing matplotlib
         waveguide_mesh['Data'] = waveguide_mesh.points[:, 2]
 
+        self.waveguide_whole = waveguide_mesh
+
         if not (self.checkBox_phaseplug.isChecked()):
             # If phaseplug checkbox is not checked, pass an empty array to avoid any issues
             self.phaseplug_array = np.array([])
@@ -533,7 +535,6 @@ class MyMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.no_file_selected()
 
         else:
-
             mesh = self.waveguide_whole.triangulate(inplace=True)
             pyvista.save_meshio(stl_filename, mesh)
 
